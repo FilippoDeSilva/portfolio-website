@@ -1,0 +1,5 @@
+User-agent: *
+Disallow: /components/
+Disallow: /public/resume.pdf
+Disallow: /public/
+Allow: /*.html$
