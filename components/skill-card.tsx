@@ -7,7 +7,6 @@ import type { ReactNode } from "react"
 interface SkillCardProps {
   skill: {
     name: string
-    level: number
     icon: ReactNode
     items: string[]
   }
@@ -21,15 +20,6 @@ export function SkillCard({ skill }: SkillCardProps) {
           <div className="rounded-full bg-primary/10 p-2">{skill.icon}</div>
           <div>
             <h3 className="text-xl font-bold">{skill.name}</h3>
-            <div className="mt-1 h-1.5 w-24 overflow-hidden rounded-full bg-muted">
-              <motion.div
-                className="h-full bg-primary"
-                initial={{ width: 0 }}
-                whileInView={{ width: `${skill.level}%` }}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                viewport={{ once: true }}
-              />
-            </div>
           </div>
         </div>
 

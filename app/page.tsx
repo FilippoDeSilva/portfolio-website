@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
@@ -26,11 +26,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ProjectCard } from "@/components/project-card";
-// import { SkillBar } from "@/components/skill-bar";
 import { SkillCard } from "@/components/skill-card";
 import { ContactForm } from "@/components/contact-form";
-import { SubtleParticles } from "@/components/subtle-particles";
+// import { SubtleParticles } from "@/components/subtle-particles";
 import { useUserLocationInfo } from "@/components/userLocationInfo";
+import { useTheme } from "next-themes";
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState("home");
@@ -44,96 +44,104 @@ export default function Home() {
   //   offset: ["start end", "end start"],
   // });
 
-  const projects = [
-    {
-      title: "Fullstack School Management System",
-      description:
-        "A comprehensive school management system(SMS) Web App for universities and colleges that encompasses students, instructors and supervisors. The project has role based authentication with intuitive UI/UX designs.",
-      image: "/classunity.jpg",
-      tags: [
-        "Next.js",
-        "Tailwind CSS",
-        "UI/UX Design",
-        "Web App(PWA)",
-        //  "Fullstack Development",
-        "Docker",
-        "Postgres",
-        "Prisma",
-        "Clerk",
-        "Zod",
-      ],
-      link: "#",
-      github: "https://www.github.com/filippodesilva/class-unity-fullstack-sms",
-    },
-    {
-      title: "AI Powered Job Scrapper",
-      description:
-        "A Next.js Project that accepts URL as an input and scrapes for jobs in the website and chat with the Hugging face inference model about the scrapped content.",
-      image: "/scrapeai.jpg",
-      tags: [
-        "Nex.js",
-        "Web App (PWA)",
-        "Puppeteer",
-        "Cheerio",
-        "Axios",
-        "PlayWright",
-        "Hugging face Inference",
-      ],
-      link: "#",
-      github: "https://www.github.com/filippodesilva/ai-job-scrapper",
-    },
-    {
-      title: "Cursor/Windsurf AI telemetry bypass",
-      description:
-        "A python Command Line Tool (CLI) script that bypasses the telemetry data stored by cursor and windsurf to get free access.",
-      image: "/cursor.jpg",
-      tags: ["Python", "Python Script", "CLI tools"],
-      link: "#",
-      github: "https://www.github.com/filippodesilva/cursor-windsurf-ai-bypass",
-    },
-    {
-      title: "Wi-Fi Brute Force",
-      description:
-        "A python based Wi-Fi security auditing CLI tool that has advanced features like multi-threading, network detection, starting where you left off, an option to choose between your wireless cards, word list support and testing a specific range of passwords.",
-      image: "/wifiaudit.jpg",
-      tags: [
-        "Python",
-        "Wireless Security",
-        "Security Auditing Tools",
-        "Python Script",
-        "CLI tools",
-      ],
-      link: "#",
-      github: "https://www.github.com/filippodesilva/Wi-Fi-Bruteforce",
-    },
-    // {
-    //   title: "Enterprise CRM System",
-    //   description: "Customer relationship management interface redesign for improved workflow efficiency.",
-    //   image: "/placeholder.svg?height=600&width=800",
-    //   tags: ["Enterprise UX", "Workflow Design", "User Testing"],
-    //   link: "#",
-    //   github: "#",
-    // },
-    // {
-    //   title: "Analytics Dashboard",
-    //   description: "Data visualization platform with customizable views and real-time reporting capabilities.",
-    //   image: "/placeholder.svg?height=600&width=800",
-    //   tags: ["Dashboard Design", "Data Visualization", "UX Research"],
-    //   link: "#",
-    //   github: "#",
-    // },
-  ];
+  const [githubProjects, setGithubProjects] = useState<any[]>([]);
+  const [sheetOpen, setSheetOpen] = useState(false);
+  const { setTheme, theme } = useTheme();
+
+  useEffect(() => {
+    fetch('/api/github-projects')
+      .then(res => res.json())
+      .then(data => setGithubProjects(data));
+  }, []);
+
+  // const projects = [
+  //   {
+  //     title: "Fullstack School Management System",
+  //     description:
+  //       "A comprehensive school management system(SMS) Web App for universities and colleges that encompasses students, instructors and supervisors. The project has role based authentication with intuitive UI/UX designs.",
+  //     image: "/classunity.jpg",
+  //     tags: [
+  //       "Next.js",
+  //       "Tailwind CSS",
+  //       "UI/UX Design",
+  //       "Web App(PWA)",
+  //       //  "Fullstack Development",
+  //       "Docker",
+  //       "Postgres",
+  //       "Prisma",
+  //       "Clerk",
+  //       "Zod",
+  //     ],
+  //     link: "https://www.class-unity.vercel.com",
+  //     github: "https://www.github.com/filippodesilva/class-unity-fullstack-sms",
+  //   },
+  //   {
+  //     title: "AI Powered Job Scrapper",
+  //     description:
+  //       "A Next.js Project that accepts URL as an input and scrapes for jobs in the website and chat with the Hugging face inference model about the scrapped content.",
+  //     image: "/scrapeai.jpg",
+  //     tags: [
+  //       "Nex.js",
+  //       "Web App (PWA)",
+  //       "Puppeteer",
+  //       "Cheerio",
+  //       "Axios",
+  //       "PlayWright",
+  //       "Hugging face Inference",
+  //     ],
+  //     link: "#",
+  //     github: "https://www.github.com/filippodesilva/ai-job-scrapper",
+  //   },
+  //   {
+  //     title: "Cursor/Windsurf AI telemetry bypass",
+  //     description:
+  //       "A python Command Line Tool (CLI) script that bypasses the telemetry data stored by cursor and windsurf to get free access.",
+  //     image: "/cursor.jpg",
+  //     tags: ["Python", "Python Script", "CLI tools"],
+  //     link: "#",
+  //     github: "https://www.github.com/filippodesilva/cursor-windsurf-ai-bypass",
+  //   },
+  //   {
+  //     title: "Wi-Fi Brute Force",
+  //     description:
+  //       "A python based Wi-Fi security auditing CLI tool that has advanced features like multi-threading, network detection, starting where you left off, an option to choose between your wireless cards, word list support and testing a specific range of passwords.",
+  //     image: "/wifiaudit.jpg",
+  //     tags: [
+  //       "Python",
+  //       "Wireless Security",
+  //       "Security Auditing Tools",
+  //       "Python Script",
+  //       "CLI tools",
+  //     ],
+  //     link: "#",
+  //     github: "https://www.github.com/filippodesilva/Wi-Fi-Bruteforce",
+  //   },
+  //   {
+  //     title: "Enterprise CRM System",
+  //     description: "Customer relationship management interface redesign for improved workflow efficiency.",
+  //     image: "/placeholder.svg?height=600&width=800",
+  //     tags: ["Enterprise UX", "Workflow Design", "User Testing"],
+  //     link: "#",
+  //     github: "#",
+  //   },
+  //   {
+  //     title: "Analytics Dashboard",
+  //     description: "Data visualization platform with customizable views and real-time reporting capabilities.",
+  //     image: "/placeholder.svg?height=600&width=800",
+  //     tags: ["Dashboard Design", "Data Visualization", "UX Research"],
+  //     link: "#",
+  //     github: "#",
+  //   },
+  // ];
 
   const skills = [
     {
       name: "Frontend Development",
-      level: 80,
       icon: <Code className="size-6 text-primary" />,
       items: ["Next.js", "React", "Tailwind CSS", "HTML5/CSS3", "JavaScript/TypeScript"],
     },
     {
       name: "Backend Development",
-      level: 75,
       icon: <Server className="size-6 text-primary" />,
       items: ["Next.js", "React", "Node.js", 
         // "Express", 
@@ -141,13 +149,11 @@ export default function Home() {
     },
     {
       name: "Database Management",
-      level: 70,
       icon: <Database className="size-6 text-primary" />,
       items: ["PostgreSQL", "MongoDB", "Prisma", "SQL", "Data Modeling"],
     },
     {
       name: "UI/UX Design",
-      level: 85,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -177,7 +183,6 @@ export default function Home() {
     },
     {
       name: "DevOps & Tools",
-      level: 60,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -195,13 +200,12 @@ export default function Home() {
         </svg>
       ),
       items: ["Git", "Docker", "CI/CD", 
-        // "Vercel", 
+        "Vercel", 
         // "AWS Basics"
       ],
     },
     {
       name: "Soft Skills",
-      level: 90,
       icon: (
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -248,14 +252,12 @@ export default function Home() {
           </Link>
 
           <nav className="hidden md:flex gap-8">
-            {["home", "about", "skills", "projects", "contact"].map((item) => (
+            {['home', 'about', 'skills', 'projects', 'contact'].map((item) => (
               <Link
                 key={item}
                 href={`#${item}`}
                 className={`text-sm font-medium transition-colors hover:text-primary ${
-                  activeSection === item
-                    ? "text-primary"
-                    : "text-muted-foreground"
+                  activeSection === item ? 'text-primary' : 'text-muted-foreground'
                 }`}
                 onClick={() => setActiveSection(item)}
               >
@@ -265,8 +267,23 @@ export default function Home() {
           </nav>
 
           <div className="flex items-center gap-4">
-            <ModeToggle />
-            <Sheet>
+            {/* Theme toggler using next-themes */}
+            <button
+              aria-label="Toggle Theme"
+              className="rounded-full p-2 hover:bg-primary/10 transition-colors"
+              onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            >
+              {theme === 'dark' ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.95 7.95l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z" style={{ color: '#3b82f6' }} />
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
+                </svg>
+              )}
+            </button>
+            <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
               <SheetTrigger asChild className="md:hidden">
                 <Button variant="ghost" size="icon">
                   <Menu className="size-5" />
@@ -274,18 +291,19 @@ export default function Home() {
               </SheetTrigger>
               <SheetContent>
                 <div className="flex flex-col gap-6 mt-8">
-                  {["home", "about", "skills", "projects", "contact"].map(
-                    (item) => (
-                      <Link
-                        key={item}
-                        href={`#${item}`}
-                        className="text-lg font-medium transition-colors hover:text-primary"
-                        onClick={() => setActiveSection(item)}
-                      >
-                        {item.charAt(0).toUpperCase() + item.slice(1)}
-                      </Link>
-                    )
-                  )}
+                  {['home', 'about', 'skills', 'projects', 'contact'].map((item) => (
+                    <Link
+                      key={item}
+                      href={`#${item}`}
+                      className="text-lg font-medium transition-colors hover:text-primary"
+                      onClick={() => {
+                        setActiveSection(item);
+                        setSheetOpen(false); // Close menu on mobile after click
+                      }}
+                    >
+                      {item.charAt(0).toUpperCase() + item.slice(1)}
+                    </Link>
+                  ))}
                 </div>
               </SheetContent>
             </Sheet>
@@ -298,7 +316,7 @@ export default function Home() {
           id="home"
           className="relative min-h-[80vh] flex items-center overflow-hidden"
         >
-          <SubtleParticles />
+          {/* <SubtleParticles /> */}
           <div className="container relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -506,6 +524,7 @@ export default function Home() {
                   transition={{ duration: 0.4, delay: index * 0.05 }}
                   viewport={{ once: true, margin: "-100px" }}
                 >
+                  {/* Remove SkillCard progress bar/skillsbar here */}
                   <SkillCard skill={skill} />
                 </motion.div>
               ))}
@@ -615,17 +634,40 @@ export default function Home() {
             </motion.div>
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {projects.map((project, index) => (
-                <motion.div
-                  key={project.title}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.4, delay: index * 0.05 }}
-                  viewport={{ once: true, margin: "-100px" }}
-                >
-                  <ProjectCard project={project} />
-                </motion.div>
-              ))}
+              {githubProjects.length > 0 ? (
+                githubProjects.map((repo: any, index: number) => (
+                  <motion.div
+                    key={repo.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    whileInView={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4, delay: index * 0.05 }}
+                    viewport={{ once: true, margin: "-100px" }}
+                  >
+                    <ProjectCard
+                      project={{
+                        title: repo.name,
+                        description: repo.description,
+                        image: "/placeholder.svg", // You can customize this
+                        tags: repo.topics || [],
+                        link: repo.homepage || repo.html_url,
+                        github: repo.html_url,
+                        stars: repo.stargazers_count,
+                        forks: repo.forks_count,
+                        watchers: repo.watchers_count,
+                      }}
+                    />
+                  </motion.div>
+                ))
+              ) : (
+                <div className="col-span-full flex flex-col items-center justify-center py-16">
+                  {/* Modern minimalistic spinner */}
+                  <span className="relative flex h-12 w-12 mb-4">
+                    <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-30 animate-ping"></span>
+                    <span className="relative inline-flex rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent animate-spin"></span>
+                  </span>
+                  <p className="text-lg text-blue-600 font-semibold">Loading projects...</p>
+                </div>
+              )}
             </div>
 
             {/* <motion.div
