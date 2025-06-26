@@ -1,15 +1,13 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/mode-toggle";
 import {
   ArrowRight,
-  // ExternalLink,
   Github,
   Linkedin,
-  // Mail,
   Menu,
   MousePointer,
   MoveUp,
@@ -23,12 +21,11 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ProjectCard } from "@/components/project-card";
 import { SkillCard } from "@/components/skill-card";
 import { ContactForm } from "@/components/contact-form";
-// import { SubtleParticles } from "@/components/subtle-particles";
+import { BlogList } from "@/components/blog-list";
 import { useUserLocationInfo } from "@/components/userLocationInfo";
 import { useTheme } from "next-themes";
 
@@ -252,10 +249,10 @@ export default function Home() {
           </Link>
 
           <nav className="hidden md:flex gap-8">
-            {['home', 'about', 'skills', 'projects', 'contact'].map((item) => (
+            {['home', 'about', 'skills', 'projects', 'contact', 'blog'].map((item) => (
               <Link
                 key={item}
-                href={`#${item}`}
+                href={item === 'blog' ? '/blog' : `#${item}`}
                 className={`text-sm font-medium transition-colors hover:text-primary ${
                   activeSection === item ? 'text-primary' : 'text-muted-foreground'
                 }`}
@@ -291,10 +288,10 @@ export default function Home() {
               </SheetTrigger>
               <SheetContent>
                 <div className="flex flex-col gap-6 mt-8">
-                  {['home', 'about', 'skills', 'projects', 'contact'].map((item) => (
+                  {['home', 'about', 'skills', 'projects', 'contact', 'blog'].map((item) => (
                     <Link
                       key={item}
-                      href={`#${item}`}
+                      href={item === 'blog' ? '/blog' : `#${item}`}
                       className="text-lg font-medium transition-colors hover:text-primary"
                       onClick={() => {
                         setActiveSection(item);
@@ -379,7 +376,7 @@ export default function Home() {
                     <span className="sr-only">GitHub</span>
                   </Link>
                   <Link
-                    href="https://web.telegram.org/k/#@Lt_Col_Sam"
+                    href="https://t.me/Lt_Col_Sam"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-primary transition-colors"
@@ -635,29 +632,33 @@ export default function Home() {
 
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {githubProjects.length > 0 ? (
-                githubProjects.map((repo: any, index: number) => (
-                  <motion.div
-                    key={repo.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: index * 0.05 }}
-                    viewport={{ once: true, margin: "-100px" }}
-                  >
-                    <ProjectCard
-                      project={{
-                        title: repo.name,
-                        description: repo.description,
-                        image: "/placeholder.svg", // You can customize this
-                        tags: repo.topics || [],
-                        link: repo.homepage || repo.html_url,
-                        github: repo.html_url,
-                        stars: repo.stargazers_count,
-                        forks: repo.forks_count,
-                        watchers: repo.watchers_count,
-                      }}
-                    />
-                  </motion.div>
-                ))
+                githubProjects.map((repo: any, index: number) => {
+                  const { screenshot, githubOgImage } = getProjectImage(repo);
+                  return (
+                    <motion.div
+                      key={repo.id}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4, delay: index * 0.05 }}
+                      viewport={{ once: true, margin: "-100px" }}
+                    >
+                      <ProjectCard
+                        project={{
+                          title: repo.name,
+                          description: repo.description,
+                          image: screenshot || "",
+                          githubOgImage,
+                          tags: repo.topics || [],
+                          link: repo.homepage && repo.homepage !== '' ? repo.homepage : repo.html_url,
+                          github: repo.html_url,
+                          stars: repo.stargazers_count,
+                          forks: repo.forks_count,
+                          watchers: repo.watchers_count,
+                        }}
+                      />
+                    </motion.div>
+                  );
+                })
               ) : (
                 <div className="col-span-full flex flex-col items-center justify-center py-16">
                   {/* Modern minimalistic spinner */}
@@ -686,6 +687,29 @@ export default function Home() {
             {/* </motion.div> */}
           </div>
         </section>
+
+        {/* <section id="blog" className="py-24 bg-background">
+          <div className="container">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              viewport={{ once: true, margin: "-100px" }}
+              className="text-center mb-16"
+            >
+              <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm text-primary mb-6">
+                Blog
+              </div>
+              <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-4">
+                Latest Blog Posts
+              </h2>
+              <p className="max-w-2xl mx-auto text-muted-foreground">
+                Insights, tutorials, and stories from my journey in tech and design.
+              </p>
+            </motion.div>
+            <BlogList />
+          </div>
+        </section> */}
 
         <section id="contact" className="py-24 bg-muted/20">
           <div className="container">
@@ -854,4 +878,23 @@ export default function Home() {
       </footer>
     </div>
   );
+}
+
+// Helper function to get the screenshot and Open Graph image for a project
+function getProjectImage(repo: any) {
+  // Always return screenshot (if homepage exists) and githubOgImage separately
+  let githubOgImage = repo.image || "/placeholder.svg";
+  let screenshot = null;
+  if (
+    repo.homepage &&
+    repo.homepage.startsWith("http") &&
+    !repo.homepage.includes("filippodesilva") &&
+    !repo.homepage.includes("portfolio")
+  ) {
+    screenshot = `https://image.thum.io/get/width/800/crop/800/${encodeURIComponent(
+      repo.homepage
+    )}`;
+  }
+  // Always return both, let UI handle fallback
+  return { screenshot, githubOgImage };
 }

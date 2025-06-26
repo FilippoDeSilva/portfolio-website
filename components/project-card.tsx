@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { motion } from "framer-motion"
 import { Card, CardContent } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ interface Project {
   title: string
   description: string
   image: string
+  githubOgImage: string
   tags: string[]
   link: string
   github: string
@@ -22,6 +23,22 @@ interface Project {
 
 export function ProjectCard({ project }: { project: Project }) {
   const [isHovered, setIsHovered] = useState(false)
+  const [imgSrc, setImgSrc] = useState(project.image)
+
+  // Always reset to screenshot on hover, so user can retry loading screenshot
+  useEffect(() => {
+    if (isHovered && project.image) {
+      setImgSrc(project.image)
+    }
+  }, [isHovered, project.image])
+
+  function handleImgError() {
+    if (imgSrc !== project.githubOgImage && project.githubOgImage) {
+      setImgSrc(project.githubOgImage)
+    } else if (imgSrc !== "/placeholder.svg") {
+      setImgSrc("/placeholder.svg")
+    }
+  }
 
   // Heuristic: show deployment link if project.link is a valid URL and not just '#'
   const isWebApp = project.link && project.link !== '#' && project.link.startsWith('http');
@@ -33,12 +50,13 @@ export function ProjectCard({ project }: { project: Project }) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative aspect-video overflow-hidden">
-        <Image
-          src={project.image || "/placeholder.svg"}
-          alt={project.title}
-          fill
-          className="object-fill transition-transform duration-500 group-hover:scale-105"
-        />
+       <Image
+  src={imgSrc}
+  alt={project.title}
+  fill
+  className="object-fill transition-transform duration-500 group-hover:scale-105"
+  onError={handleImgError}
+/>
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: isHovered ? 1 : 0 }}

@@ -37,6 +37,7 @@ export async function GET(req: NextRequest) {
       login: repo.owner.login,
       avatar_url: repo.owner.avatar_url,
     },
+    image: `https://opengraph.githubassets.com/1/${repo.owner.login}/${repo.name}`, // <-- Add this line
   }));
   return NextResponse.json(mapped);
 }
