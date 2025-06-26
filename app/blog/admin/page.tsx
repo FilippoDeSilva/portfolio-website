@@ -19,7 +19,7 @@ import Paragraph from '@tiptap/extension-paragraph';
 import { Button } from "@/components/ui/button";
 import { BlogCard } from "@/components/blog-card";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, LogOut } from "lucide-react";
 import { Plus, Trash2, Upload, Check, RefreshCw, Paperclip, Send, X } from "lucide-react";
 const lowlight = createLowlight();
 lowlight.register({ javascript });
@@ -310,11 +310,12 @@ export default function BlogAdmin() {
       <TitleBar title="Blog Admin">
         {user && (
           <Button
-            variant="outline"
-            className="ml-4 px-4 py-2 text-primary dark:text-primary-foreground border-primary dark:border-primary bg-card dark:bg-card hover:bg-primary/10 dark:hover:bg-primary/20 transition-colors"
+            variant="ghost"
+            className="ml-4 p-2 rounded-full text-primary dark:text-primary-foreground hover:bg-primary/10 dark:hover:bg-primary/20 hover:scale-110 hover:opacity-80 transition-all duration-150"
             onClick={handleLogout}
+            aria-label="Sign Out"
           >
-            Sign Out
+            <LogOut className="w-6 h-6" />
           </Button>
         )}
       </TitleBar>
@@ -615,6 +616,41 @@ export default function BlogAdmin() {
                     variant="destructive"
                     onClick={async () => {
                       if (deleteModal.postId) {
+                        // Fetch the post to get cover_image and attachments
+                        const { data: postToDelete } = await supabase
+                          .from("blogposts")
+                          .select("cover_image, attachments")
+                          .eq("id", deleteModal.postId)
+                          .single();
+                        // Helper to extract storage path from public URL
+                        function getStoragePath(url: string): string | null {
+                          // Only handle Supabase storage public URLs
+                          if (!url || typeof url !== 'string') return null;
+                          // Example: https://xyz.supabase.co/storage/v1/object/public/blog-attachments/cover-images/123.jpg
+                          const match = url.match(/blog-attachments\/(.*)$/);
+                          return match ? match[1] : null;
+                        }
+                        // Delete cover image if present and is a Supabase storage file
+                        if (postToDelete?.cover_image) {
+                          const path = getStoragePath(postToDelete.cover_image);
+                          if (path) {
+                            const { error } = await supabase.storage.from('blog-attachments').remove([path]);
+                            if (error) console.error('Failed to delete cover image from storage:', error.message);
+                          }
+                        }
+                        // Delete all attachments if present and are Supabase storage files
+                        if (Array.isArray(postToDelete?.attachments)) {
+                          for (const att of postToDelete.attachments) {
+                            if (att?.url) {
+                              const path = getStoragePath(att.url);
+                              if (path) {
+                                const { error } = await supabase.storage.from('blog-attachments').remove([path]);
+                                if (error) console.error('Failed to delete attachment from storage:', error.message);
+                              }
+                            }
+                          }
+                        }
+                        // Delete the post from the database
                         await supabase.from("blogposts").delete().eq("id", deleteModal.postId);
                         fetchPosts();
                       }

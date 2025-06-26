@@ -87,7 +87,7 @@ return (
                 src={post.cover_image}
                 alt={post.title}
                 fill
-                style={{ objectFit: "contain" }}
+                style={{ objectFit: "cover" }}
                 className="transition-transform duration-500"
                 sizes="(max-width: 640px) 100vw, 700px"
                 priority
