@@ -25,3 +25,6 @@ ALTER TABLE blogposts
 
 -- Existing data will be migrated to array if not already.
 -- No changes needed for cover_image, as it is already a text field.
+
+-- Add view_count column to blogposts
+ALTER TABLE blogposts ADD COLUMN IF NOT EXISTS view_count integer NOT NULL DEFAULT 0;

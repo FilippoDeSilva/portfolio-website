@@ -4,18 +4,20 @@ import { useEffect, useState } from "react";
 import { BlogCard, BlogPost } from "./blog-card";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export function BlogList({ excludeId, columns = 3 }: { excludeId?: string; columns?: number } = {}) {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     async function fetchPosts() {
       const { data, error } = await supabase
         .from("blogposts")
         .select(
-          "id, title, excerpt, cover_image, media_url, media_type, created_at, likes, love, laugh"
+          "id, title, excerpt, cover_image, media_url, media_type, created_at, likes, love, laugh, view_count"
         )
         .order("created_at", { ascending: false });
       if (error) {
@@ -43,9 +45,16 @@ export function BlogList({ excludeId, columns = 3 }: { excludeId?: string; colum
   const grid = (
     <div className={`grid gap-8 sm:grid-cols-1 md:grid-cols-${columns} lg:grid-cols-${columns}`.replace(/\d/g, d => columns.toString())}>
       {posts.map((post) => (
-        <Link key={post.id} href={`/blog/${post.id}`} className="block group rounded-2xl transition overflow-hidden hover:bg-blue-50 dark:hover:bg-blue-950/40 focus:bg-blue-100 dark:focus:bg-blue-900/40">
+        <button
+          key={post.id}
+          className="block group rounded-2xl transition overflow-hidden hover:bg-blue-50 dark:hover:bg-blue-950/40 focus:bg-blue-100 dark:focus:bg-blue-900/40 w-full text-left"
+          onClick={(e) => {
+            e.preventDefault();
+            router.push(`/blog/${post.id}`);
+          }}
+        >
           <BlogCard post={post} previewOnly />
-        </Link>
+        </button>
       ))}
     </div>
   );

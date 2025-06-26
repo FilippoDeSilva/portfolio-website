@@ -9,6 +9,7 @@ import { BlogReactions } from "@/components/blog-reactions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { BlogList } from "@/components/blog-list";
+import Image from "next/image";
 
 export default function BlogDetailPage() {
   const params = useParams();
@@ -21,7 +22,7 @@ export default function BlogDetailPage() {
     async function fetchPost() {
       const { data, error } = await supabase
         .from("blogposts")
-        .select("id, title, excerpt, content, cover_image, media_url, media_type, created_at, likes, love, laugh, attachments")
+        .select("id, title, excerpt, content, cover_image, media_url, media_type, created_at, likes, love, laugh, attachments, view_count")
         .eq("id", id)
         .single();
       if (error) {
@@ -34,6 +35,25 @@ export default function BlogDetailPage() {
     }
     if (id) fetchPost();
   }, [id]);
+
+  // Increment view count after post is loaded and update in real time
+  useEffect(() => {
+    if (!post?.id) return;
+    // Increment view count
+    supabase.rpc('increment_view_count', { post_id: post.id }).then(() => {
+      // Fetch the updated view_count only
+      supabase
+        .from('blogposts')
+        .select('view_count')
+        .eq('id', post.id)
+        .single()
+        .then(({ data }) => {
+          if (data && typeof data.view_count === 'number') {
+            setPost((prev) => prev ? { ...prev, view_count: data.view_count } : prev);
+          }
+        });
+    });
+  }, [post?.id]);
 
   if (loading) return <div className="py-24 text-center">Loading...</div>;
   if (error) return <div className="py-24 text-center text-red-500">Error: {error}</div>;
@@ -61,13 +81,18 @@ return (
             </Link>
           </div>
           {/* Cover Image */}
-          <div className="w-full aspect-[16/9] bg-gray-200 dark:bg-zinc-800 overflow-hidden">
-            <img
-              src={post.cover_image}
-              alt={post.title}
-              className="object-cover w-full h-full"
-              style={{ objectFit: "cover" }}
-            />
+          <div className="relative w-full bg-gray-200 dark:bg-zinc-800 overflow-hidden" style={{ height: 360, maxHeight: 480 }}>
+            {post.cover_image && (
+              <Image
+                src={post.cover_image}
+                alt={post.title}
+                fill
+                style={{ objectFit: "contain" }}
+                className="transition-transform duration-500"
+                sizes="(max-width: 640px) 100vw, 700px"
+                priority
+              />
+            )}
           </div>
           <div className="p-6 flex flex-col gap-6">
             {/* Post Title, Excerpt, and Content */}
@@ -75,7 +100,9 @@ return (
               <h1 className="text-4xl font-extrabold leading-tight mb-2 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 bg-clip-text text-transparent drop-shadow-sm">
                 {post.title}
               </h1>
-              {post.excerpt && <p className="text-lg text-muted-foreground mb-2 font-medium">{post.excerpt}</p>}
+              <div className="flex items-center gap-4 mb-2">
+                {post.excerpt && <p className="text-lg text-muted-foreground font-medium m-0">{post.excerpt}</p>}
+              </div>
               {post.content && (
                 <div className="prose dark:prose-invert max-w-none text-lg leading-relaxed bg-white/80 dark:bg-zinc-900/70 rounded-xl p-6 shadow-inner border border-border">
                   <div dangerouslySetInnerHTML={{ __html: post.content }} />
@@ -138,10 +165,14 @@ return (
             <div className="pt-8">
               <BlogComments postId={post.id} />
             </div>
-            {/* Timestamp */}
-            <div className="flex justify-end mt-4">
+            {/* Timestamp and View Count always bottom right */}
+            <div className="flex items-end justify-end mt-4 gap-3">
+              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                {post.view_count ?? 0}
+              </span>
               <span className="text-xs text-muted-foreground italic">
-                {post.created_at ? new Date(post.created_at).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : ''}
+                {post.created_at ? new Date(post.created_at).toLocaleString(undefined, { year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : ''}
               </span>
             </div>
           </div>

@@ -17,6 +17,7 @@ export type BlogPost = {
   laugh?: number;
   content?: string;
   attachments?: any[];
+  view_count?: number;
 };
 
 export function BlogCard({
@@ -258,9 +259,13 @@ export function BlogCard({
           )}
         </div>
 
-        {/* Timestamp always bottom right */}
-        <div className="flex items-end justify-end pt-2">
-          <span className="text-xs text-muted-foreground">
+        {/* Timestamp and View Count always bottom right */}
+        <div className="flex items-end justify-end pt-2 gap-3">
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>
+            {post.view_count ?? 0}
+          </span>
+          <span className="text-xs text-muted-foreground italic">
             {new Date(post.created_at).toLocaleString(undefined, {
               year: "numeric",
               month: "short",
