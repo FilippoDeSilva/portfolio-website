@@ -649,6 +649,7 @@ export default function BlogAdmin() {
                         }
                         // Delete all files in parallel (if any)
                         if (filePaths.length > 0) {
+                          console.log('Deleting these file paths from storage:', filePaths);
                           const { error } = await supabase.storage.from('blog-attachments').remove(filePaths);
                           if (error) {
                             console.error('Some files could not be deleted from storage:', error.message);
