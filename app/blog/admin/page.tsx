@@ -130,6 +130,7 @@ export default function BlogAdmin() {
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -614,8 +615,11 @@ export default function BlogAdmin() {
                 <div className="flex gap-4 mt-2">
                   <Button
                     variant="destructive"
+                    disabled={deleting}
                     onClick={async () => {
-                      if (deleteModal.postId) {
+                      if (!deleteModal.postId) return;
+                      setDeleting(true);
+                      try {
                         // Fetch the post to get cover_image and attachments
                         const { data: postToDelete } = await supabase
                           .from("blogposts")
@@ -624,40 +628,44 @@ export default function BlogAdmin() {
                           .single();
                         // Helper to extract storage path from public URL
                         function getStoragePath(url: string): string | null {
-                          // Only handle Supabase storage public URLs
                           if (!url || typeof url !== 'string') return null;
-                          // Example: https://xyz.supabase.co/storage/v1/object/public/blog-attachments/cover-images/123.jpg
-                          const match = url.match(/blog-attachments\/(.*)$/);
+                          // Accepts any Supabase public URL for this bucket
+                          const match = url.match(/blog-attachments\/(.+)$/);
                           return match ? match[1] : null;
                         }
-                        // Delete cover image if present and is a Supabase storage file
+                        // Collect all file paths to delete
+                        const filePaths: string[] = [];
                         if (postToDelete?.cover_image) {
                           const path = getStoragePath(postToDelete.cover_image);
-                          if (path) {
-                            const { error } = await supabase.storage.from('blog-attachments').remove([path]);
-                            if (error) console.error('Failed to delete cover image from storage:', error.message);
-                          }
+                          if (path) filePaths.push(path);
                         }
-                        // Delete all attachments if present and are Supabase storage files
                         if (Array.isArray(postToDelete?.attachments)) {
                           for (const att of postToDelete.attachments) {
                             if (att?.url) {
                               const path = getStoragePath(att.url);
-                              if (path) {
-                                const { error } = await supabase.storage.from('blog-attachments').remove([path]);
-                                if (error) console.error('Failed to delete attachment from storage:', error.message);
-                              }
+                              if (path) filePaths.push(path);
                             }
+                          }
+                        }
+                        // Delete all files in parallel (if any)
+                        if (filePaths.length > 0) {
+                          const { error } = await supabase.storage.from('blog-attachments').remove(filePaths);
+                          if (error) {
+                            console.error('Some files could not be deleted from storage:', error.message);
                           }
                         }
                         // Delete the post from the database
                         await supabase.from("blogposts").delete().eq("id", deleteModal.postId);
                         fetchPosts();
+                      } catch (err) {
+                        console.error('Error during post deletion:', err);
+                      } finally {
+                        setDeleting(false);
+                        setDeleteModal({ open: false, postId: null });
                       }
-                      setDeleteModal({ open: false, postId: null });
                     }}
                   >
-                    Delete
+                    {deleting ? 'Deleting...' : 'Delete'}
                   </Button>
                   <Button
                     variant="outline"
