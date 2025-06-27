@@ -24,6 +24,41 @@ import { Plus, Trash2, Upload, Check, RefreshCw, Paperclip, Send, X } from "luci
 const lowlight = createLowlight();
 lowlight.register({ javascript });
 
+// Helper to extract storage path from a Supabase public URL
+// function getStoragePath(url: string): string | null {
+//   if (!url || typeof url !== 'string') return null;
+//   const match = url.match(/blog-attachments\/(.+)$/);
+//   return match ? match[1] : null;
+// }
+
+// Helper to clean up all storage files for a post
+// async function cleanupBlogPostStorage(post: { cover_image?: string, attachments?: any[] }) {
+//   const filePaths: string[] = [];
+//   if (post?.cover_image) {
+//     const path = getStoragePath(post.cover_image);
+//     if (path) filePaths.push(path);
+//   }
+//   if (Array.isArray(post?.attachments)) {
+//     for (const att of post.attachments) {
+//       if (att?.url) {
+//         const path = getStoragePath(att.url);
+//         if (path) filePaths.push(path);
+//       }
+//     }
+//   }
+//   if (filePaths.length > 0) {
+//     console.log('Attempting to delete these file paths from storage:', filePaths);
+//     const { error } = await supabase.storage.from('blog-attachments').remove(filePaths);
+//     if (error) {
+//       console.error('Supabase storage remove error:', error.message, error);
+//     } else {
+//       console.log('Successfully deleted files:', filePaths);
+//     }
+//   } else {
+//     console.log('No file paths found for deletion.');
+//   }
+// }
+
 function TiptapMenuBar({ editor }: { editor: any }) {
   if (!editor) return null;
   // Button style helpers
@@ -626,34 +661,16 @@ export default function BlogAdmin() {
                           .select("cover_image, attachments")
                           .eq("id", deleteModal.postId)
                           .single();
-                        // Helper to extract storage path from public URL
-                        function getStoragePath(url: string): string | null {
-                          if (!url || typeof url !== 'string') return null;
-                          // Accepts any Supabase public URL for this bucket
-                          const match = url.match(/blog-attachments\/(.+)$/);
-                          return match ? match[1] : null;
-                        }
-                        // Collect all file paths to delete
-                        const filePaths: string[] = [];
-                        if (postToDelete?.cover_image) {
-                          const path = getStoragePath(postToDelete.cover_image);
-                          if (path) filePaths.push(path);
-                        }
-                        if (Array.isArray(postToDelete?.attachments)) {
-                          for (const att of postToDelete.attachments) {
-                            if (att?.url) {
-                              const path = getStoragePath(att.url);
-                              if (path) filePaths.push(path);
-                            }
-                          }
-                        }
-                        // Delete all files in parallel (if any)
-                        if (filePaths.length > 0) {
-                          console.log('Deleting these file paths from storage:', filePaths);
-                          const { error } = await supabase.storage.from('blog-attachments').remove(filePaths);
-                          if (error) {
-                            console.error('Some files could not be deleted from storage:', error.message);
-                          }
+                        // Clean up storage
+                        if (postToDelete) {
+                          await fetch('/api/admin/delete-blog-files', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                              cover_image: postToDelete.cover_image,
+                              attachments: postToDelete.attachments,
+                            }),
+                          });
                         }
                         // Delete the post from the database
                         await supabase.from("blogposts").delete().eq("id", deleteModal.postId);
