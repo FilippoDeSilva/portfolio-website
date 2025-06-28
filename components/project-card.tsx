@@ -19,23 +19,38 @@ interface Project {
   stars?: number
   forks?: number
   watchers?: number
+  isDeployed?: boolean
 }
 
 export function ProjectCard({ project }: { project: Project }) {
   const [isHovered, setIsHovered] = useState(false)
   const [imgSrc, setImgSrc] = useState(project.image)
+  const [hasError, setHasError] = useState(false)
+
+  // Reset to original image when project changes
+  useEffect(() => {
+    setImgSrc(project.image)
+    setHasError(false)
+  }, [project.image])
 
   // Always reset to screenshot on hover, so user can retry loading screenshot
   useEffect(() => {
-    if (isHovered && project.image) {
+    if (isHovered && project.image && !hasError) {
       setImgSrc(project.image)
     }
-  }, [isHovered, project.image])
+  }, [isHovered, project.image, hasError])
 
   function handleImgError() {
-    if (imgSrc !== project.githubOgImage && project.githubOgImage) {
-      setImgSrc(project.githubOgImage)
-    } else if (imgSrc !== "/placeholder.svg") {
+    if (!hasError) {
+      setHasError(true)
+      // Try GitHub Open Graph image first
+      if (imgSrc !== project.githubOgImage && project.githubOgImage) {
+        setImgSrc(project.githubOgImage)
+      } else if (imgSrc !== "/placeholder.svg") {
+        setImgSrc("/placeholder.svg")
+      }
+    } else {
+      // If GitHub Open Graph also fails, use placeholder
       setImgSrc("/placeholder.svg")
     }
   }
@@ -50,13 +65,14 @@ export function ProjectCard({ project }: { project: Project }) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative aspect-video overflow-hidden">
-       <Image
-  src={imgSrc}
-  alt={project.title}
-  fill
-  className="object-fill transition-transform duration-500 group-hover:scale-105"
-  onError={handleImgError}
-/>
+        <Image
+          src={imgSrc}
+          alt={project.title}
+          fill
+          className="object-fill transition-transform duration-500 group-hover:scale-105"
+          onError={handleImgError}
+        />
+        
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: isHovered ? 1 : 0 }}
@@ -67,7 +83,7 @@ export function ProjectCard({ project }: { project: Project }) {
             <Button asChild size="sm">
               <Link href={project.link} target="_blank" rel="noopener noreferrer">
                 <svg className="mr-2 size-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" d="M18 13v6a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-                View
+                View Live
               </Link>
             </Button>
           )}

@@ -644,7 +644,7 @@ export default function Home() {
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {githubProjects.length > 0 ? (
                 githubProjects.map((repo: any, index: number) => {
-                  const { screenshot, githubOgImage } = getProjectImage(repo);
+                  const { screenshot, githubOgImage, isDeployed } = getProjectImage(repo);
                   return (
                     <motion.div
                       key={repo.id}
@@ -665,6 +665,7 @@ export default function Home() {
                           stars: repo.stargazers_count,
                           forks: repo.forks_count,
                           watchers: repo.watchers_count,
+                          isDeployed,
                         }}
                       />
                     </motion.div>
@@ -893,26 +894,32 @@ export default function Home() {
 
 // Helper function to get the screenshot and Open Graph image for a project
 function getProjectImage(repo: any) {
-  let githubOgImage = repo.image || "/placeholder.svg";
-  let screenshot = null;
+  // GitHub Open Graph image as fallback
+  const githubOgImage = repo.image || `https://opengraph.githubassets.com/1/${repo.owner?.login || 'FilippoDeSilva'}/${repo.name}`;
   
-  // Check if project has a valid homepage (deployed website)
-  if (
-    repo.homepage &&
-    repo.homepage.startsWith("http") &&
-    !repo.homepage.includes("filippodesilva") &&
-    !repo.homepage.includes("portfolio")
-  ) {
-    // For deployed projects, show the actual website screenshot
-    screenshot = `https://image.thum.io/get/width/800/crop/800/${encodeURIComponent(
-      repo.homepage
-    )}`;
-  } else {
-    // For non-deployed projects, show the GitHub repository page
-    screenshot = `https://image.thum.io/get/width/800/crop/800/${encodeURIComponent(
-      repo.html_url
-    )}`;
+  // Check if project is deployed
+  const isDeployed = repo.homepage && repo.homepage.startsWith("http") && !repo.homepage.includes("filippodesilva") && !repo.homepage.includes("portfolio");
+  
+  let screenshot = githubOgImage; // Default to GitHub Open Graph
+  
+  if (isDeployed) {
+    // For deployed projects, use local screenshots from public folder
+    // Map repository names to screenshot files
+    const screenshotMap: { [key: string]: string } = {
+      'class-unity-fullstack-sms': '/projects/class-unity-screenshot.jpg',
+      'blackraven': '/projects/black-raven-screenshot.jpg',
+      // Add more mappings as needed
+    };
+    
+    const screenshotPath = screenshotMap[repo.name];
+    if (screenshotPath) {
+      screenshot = screenshotPath;
+    }
   }
   
-  return { screenshot, githubOgImage };
+  return { 
+    screenshot, 
+    githubOgImage,
+    isDeployed
+  };
 }

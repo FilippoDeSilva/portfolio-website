@@ -42,7 +42,7 @@ const nextConfig = {
       { protocol: "https", hostname: "media.tenor.com", pathname: "/**" }, // Tenor
       { protocol: "https", hostname: "media.giphy.com", pathname: "/**" }, // Giphy
       { protocol: "https", hostname: "cdn.streamable.com", pathname: "/**" }, // Streamable
-      { protocol: "https", hostname: "fast.wistia.com", pathname: "/**" }, // Wistia
+      // { protocol: "https", hostname: "fast.wistia.com", pathname: "/**" }, // Wistia
       // { protocol: "https", hostname: "content.jwplatform.com", pathname: "/**" }, // JWPlayer
       { protocol: "https", hostname: "players.brightcove.net", pathname: "/**" }, // Brightcove
       { protocol: "https", hostname: "play.vidyard.com", pathname: "/**" }, // Vidyard
@@ -50,7 +50,7 @@ const nextConfig = {
       { protocol: "https", hostname: "image.mux.com", pathname: "/**" }, // Mux
       { protocol: "https", hostname: "b-cdn.net", pathname: "/**" }, // BunnyCDN
       { protocol: "https", hostname: "global.ssl.fastly.net", pathname: "/**" }, // Fastly
-      { protocol: "https", hostname: "akamaized.net", pathname: "/**" }, // Akamai
+      // { protocol: "https", hostname: "akamaized.net", pathname: "/**" }, // Akamai
       { protocol: "https", hostname: "assets.imgix.net", pathname: "/**" }, // Imgix
       { protocol: "https", hostname: "i.ibb.co", pathname: "/**" }, // ImgBB
       { protocol: "https", hostname: "img.freepik.com", pathname: "/**" }, // Freepik
@@ -60,9 +60,9 @@ const nextConfig = {
       { protocol: "https", hostname: "tdawmqlwnaxthhncuhee.supabase.co", pathname: "/storage/v1/object/public/blog-attachments/**" }, // Your Supabase storage
       { protocol: "https", hostname: "videos.openai.com", pathname: "/**" }, // OpenAI
       { protocol: "https", hostname: "media.istockphoto.com", pathname: "/**" }, // Istock
-      { protocol: "https", hostname: "image.thum.io", pathname: "/**" }, // Thum.io screenshot service
       { protocol: "https", hostname: "opengraph.githubassets.com", pathname: "/**" }, // GitHub Open Graph images
       { protocol: "https", hostname: "github.com", pathname: "/**" }, // GitHub repository pages
+      { protocol: "https", hostname: "via.placeholder.com", pathname: "/**" }, // Placeholder images for deployed projects
     ],
   },
 
