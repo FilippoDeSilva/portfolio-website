@@ -1,9 +1,10 @@
 "use client"
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { User } from "lucide-react";
 import { useUserLocationInfo } from "@/components/userLocationInfo";
+import { usePathname } from "next/navigation";
 
 export default function TitleBar({ title, children }: { title: string; children?: React.ReactNode }) {
   const [activeSection, setActiveSection] = useState<string>("home");
@@ -11,6 +12,16 @@ export default function TitleBar({ title, children }: { title: string; children?
   const [isLoading, setIsLoading] = useState(false);
   const name = title;
   const userInfo = useUserLocationInfo();
+  const pathname = usePathname();
+
+  // Update active section based on current pathname
+  useEffect(() => {
+    if (pathname === '/blog') {
+      setActiveSection('blog');
+    } else if (pathname === '/') {
+      setActiveSection('home');
+    }
+  }, [pathname]);
 
   return (
     <header className="fixed justify-between top-0 left-0 right-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-md m-0 p-0">

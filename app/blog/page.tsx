@@ -1,7 +1,7 @@
 "use client"
 import { BlogList } from "@/components/blog-list";
 import TitleBar from "@/components/titlebar";
-import { useUserLocationInfo } from "@/components/userLocationInfo";
+
 export default function BlogPage() {
   return (
     <main className="flex-1 pt-2">

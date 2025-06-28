@@ -43,7 +43,7 @@ const nextConfig = {
       { protocol: "https", hostname: "media.giphy.com", pathname: "/**" }, // Giphy
       { protocol: "https", hostname: "cdn.streamable.com", pathname: "/**" }, // Streamable
       { protocol: "https", hostname: "fast.wistia.com", pathname: "/**" }, // Wistia
-      { protocol: "https", hostname: "content.jwplatform.com", pathname: "/**" }, // JWPlayer
+      // { protocol: "https", hostname: "content.jwplatform.com", pathname: "/**" }, // JWPlayer
       { protocol: "https", hostname: "players.brightcove.net", pathname: "/**" }, // Brightcove
       { protocol: "https", hostname: "play.vidyard.com", pathname: "/**" }, // Vidyard
       { protocol: "https", hostname: "video.daily.co", pathname: "/**" }, // Daily.co
@@ -55,11 +55,14 @@ const nextConfig = {
       { protocol: "https", hostname: "i.ibb.co", pathname: "/**" }, // ImgBB
       { protocol: "https", hostname: "img.freepik.com", pathname: "/**" }, // Freepik
       { protocol: "https", hostname: "static.canva.com", pathname: "/**" }, // Canva
-      { protocol: "https", hostname: "drscdn.500px.org", pathname: "/**" }, // 500px
-      { protocol: "https", hostname: "images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com", pathname: "/**" }, // DeviantArt
+      // { protocol: "https", hostname: "drscdn.500px.org", pathname: "/**" }, // 500px
+      // { protocol: "https", hostname: "images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com", pathname: "/**" }, // DeviantArt
       { protocol: "https", hostname: "tdawmqlwnaxthhncuhee.supabase.co", pathname: "/storage/v1/object/public/blog-attachments/**" }, // Your Supabase storage
       { protocol: "https", hostname: "videos.openai.com", pathname: "/**" }, // OpenAI
-      {protocol: "https", hostname: "media.istockphoto.com", pathname: "/**"} // Istock
+      { protocol: "https", hostname: "media.istockphoto.com", pathname: "/**" }, // Istock
+      { protocol: "https", hostname: "image.thum.io", pathname: "/**" }, // Thum.io screenshot service
+      { protocol: "https", hostname: "opengraph.githubassets.com", pathname: "/**" }, // GitHub Open Graph images
+      { protocol: "https", hostname: "github.com", pathname: "/**" }, // GitHub repository pages
     ],
   },
 

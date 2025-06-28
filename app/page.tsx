@@ -25,15 +25,17 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ProjectCard } from "@/components/project-card";
 import { SkillCard } from "@/components/skill-card";
 import { ContactForm } from "@/components/contact-form";
-import { BlogList } from "@/components/blog-list";
+// import { BlogList } from "@/components/blog-list";
 import { useUserLocationInfo } from "@/components/userLocationInfo";
 import { useTheme } from "next-themes";
+import { usePathname } from "next/navigation";
 
 export default function Home() {
   const [activeSection, setActiveSection] = useState("home");
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.05], [1, 0.97]);
+  const pathname = usePathname();
 
   const targetRef = useRef(null);
   // const { scrollYProgress: scrollYProgressProjects } = useScroll({
@@ -50,6 +52,15 @@ export default function Home() {
       .then(res => res.json())
       .then(data => setGithubProjects(data));
   }, []);
+
+  // Update active section based on current pathname
+  useEffect(() => {
+    if (pathname === '/blog') {
+      setActiveSection('blog');
+    } else if (pathname === '/') {
+      setActiveSection('home');
+    }
+  }, [pathname]);
 
   // const projects = [
   //   {
@@ -646,7 +657,7 @@ export default function Home() {
                         project={{
                           title: repo.name,
                           description: repo.description,
-                          image: screenshot || "",
+                          image: screenshot || "/placeholder.svg",
                           githubOgImage,
                           tags: repo.topics || [],
                           link: repo.homepage && repo.homepage !== '' ? repo.homepage : repo.html_url,
@@ -882,19 +893,26 @@ export default function Home() {
 
 // Helper function to get the screenshot and Open Graph image for a project
 function getProjectImage(repo: any) {
-  // Always return screenshot (if homepage exists) and githubOgImage separately
   let githubOgImage = repo.image || "/placeholder.svg";
   let screenshot = null;
+  
+  // Check if project has a valid homepage (deployed website)
   if (
     repo.homepage &&
     repo.homepage.startsWith("http") &&
     !repo.homepage.includes("filippodesilva") &&
     !repo.homepage.includes("portfolio")
   ) {
+    // For deployed projects, show the actual website screenshot
     screenshot = `https://image.thum.io/get/width/800/crop/800/${encodeURIComponent(
       repo.homepage
     )}`;
+  } else {
+    // For non-deployed projects, show the GitHub repository page
+    screenshot = `https://image.thum.io/get/width/800/crop/800/${encodeURIComponent(
+      repo.html_url
+    )}`;
   }
-  // Always return both, let UI handle fallback
+  
   return { screenshot, githubOgImage };
 }
