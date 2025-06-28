@@ -19,8 +19,9 @@ import Paragraph from '@tiptap/extension-paragraph';
 import { Button } from "@/components/ui/button";
 import { BlogCard } from "@/components/blog-card";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Eye, EyeOff, LogOut } from "lucide-react";
-import { Plus, Trash2, Upload, Check, RefreshCw, Paperclip, Send, X } from "lucide-react";
+import { Eye, EyeOff, LogOut, MessageCircle, X } from "lucide-react";
+import { Plus, Trash2, Upload, Check, RefreshCw, Paperclip, Send } from "lucide-react";
+import AIChatModal from "@/components/ui/ai-chat-modal";
 const lowlight = createLowlight();
 lowlight.register({ javascript });
 
@@ -166,6 +167,7 @@ export default function BlogAdmin() {
   const [loginError, setLoginError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [aiModalOpen, setAIModalOpen] = useState(false);
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -432,6 +434,20 @@ export default function BlogAdmin() {
               Logged in as <strong>{user.email}</strong>
             </span>
           </div>
+          {/* Floating AI button */}
+          <Button
+            variant="default"
+            size="icon"
+            className="fixed bottom-6 right-6 z-50 shadow-lg bg-primary text-primary-foreground hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary"
+            onClick={() => setAIModalOpen(true)}
+            aria-label="Open AI Assistant"
+          >
+            <MessageCircle className="w-7 h-7" />
+          </Button>
+          <AIChatModal open={aiModalOpen} onClose={() => setAIModalOpen(false)} onInsert={text => {
+            setAIModalOpen(false);
+            editor?.commands.insertContent(text);
+          }} />
           {/* Responsive layout: editor first on mobile, posts second */}
           <div className="flex flex-col md:grid md:grid-cols-2 gap-4">
             {/* Post Editor (only for authenticated users) - order first on mobile */}
