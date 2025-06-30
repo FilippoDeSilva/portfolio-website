@@ -17,7 +17,7 @@ export function BlogList({
   excludeId?: string;
   columns?: number;
   currentPage?: number;
-  onDataLoaded: (totalPosts: number) => void;
+  onDataLoaded?: (totalPosts: number) => void;
 }) {
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,7 +46,7 @@ export function BlogList({
         let filtered = data as BlogPost[];
         if (excludeId) filtered = filtered.filter((p) => p.id !== excludeId);
         setPosts(filtered);
-        onDataLoaded(count || 0);
+        if (onDataLoaded) onDataLoaded(count || 0);
       }
       setLoading(false);
     }
@@ -54,13 +54,37 @@ export function BlogList({
   }, [excludeId, currentPage, onDataLoaded]);
 
   if (loading)
-    return <div className="py-12 text-center">Loading blog posts...</div>;
+    return (
+      <div className="py-12 text-center">
+        <div className="grid gap-8 sm:grid-cols-1 md:grid-cols-3 lg:grid-cols-3 max-w-4xl mx-auto">
+          {[...Array(POSTS_PER_PAGE)].map((_, i) => (
+            <div
+              key={i}
+              className="animate-pulse rounded-2xl border border-border bg-gradient-to-br from-background to-muted/40 shadow-lg flex flex-col h-[400px] p-6"
+            >
+              <div className="h-40 w-full bg-muted/60 rounded-xl mb-4" />
+              <div className="h-6 w-2/3 bg-muted/50 rounded mb-2" />
+              <div className="h-4 w-1/2 bg-muted/40 rounded mb-4" />
+              <div className="flex-1" />
+              <div className="h-4 w-1/3 bg-muted/30 rounded mt-4" />
+            </div>
+          ))}
+        </div>
+        {/* <div className="mt-8 text-muted-foreground text-base font-medium">Loading blog posts...</div> */}
+      </div>
+    );
   if (error)
     return (
       <div className="py-12 text-center text-red-500">Error: {error}</div>
     );
   if (!posts.length)
-    return <div className="py-12 text-center">No blog posts found.</div>;
+    return (
+      <div className="py-12 text-center flex flex-col items-center gap-4">
+        <svg className="w-12 h-12 text-muted-foreground mb-2" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6 1a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <div className="text-lg font-semibold text-muted-foreground">No blog posts found.</div>
+        <div className="text-sm text-muted-foreground">Check back soon for new content!</div>
+      </div>
+    );
 
   const grid = (
     <div className={`grid gap-8 sm:grid-cols-1 md:grid-cols-${columns} lg:grid-cols-${columns}`}>
