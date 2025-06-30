@@ -23,7 +23,12 @@ export default function TitleBar({ title, children }: { title: string; children?
   const router = useRouter();
 
   useEffect(() => {
-    if (pathname === "/blog") {
+    // Set Blog as active for /blog, /blog/[id], and /blog/admin
+    if (
+      pathname === "/blog" ||
+      (pathname && pathname.startsWith("/blog/")) ||
+      pathname === "/blog/admin"
+    ) {
       setActiveSection("blog");
       return;
     }
