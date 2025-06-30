@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { MessageCircle, X, Send as Telegram, StopCircle } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface Message {
   role: "user" | "assistant";
@@ -42,18 +44,21 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
       });
       if (!res.body) throw new Error("No response body");
       const reader = res.body.getReader();
+      const decoder = new TextDecoder();
       let aiContent = "";
       let done = false;
       while (!done) {
         const { value, done: doneReading } = await reader.read();
         done = doneReading;
         if (value) {
-          const chunk = new TextDecoder().decode(value);
+          const chunk = decoder.decode(value, { stream: true });
           aiContent += chunk;
           setStreamedContent(aiContent);
         }
       }
-      setMessages((prev) => [...prev, { role: "assistant", content: aiContent }]);
+      if (aiContent) {
+        setMessages((prev) => [...prev, { role: "assistant", content: aiContent }]);
+      }
       setStreamedContent("");
     } catch (err: any) {
       if (err.name !== "AbortError") setError("Failed to contact AI assistant.");
@@ -110,7 +115,7 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
             <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}> 
               <div className={`rounded-xl px-4 py-2 max-w-[80%] whitespace-pre-line ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-border"}`}>
                 {msg.role === "assistant" ? (
-                  <span dangerouslySetInnerHTML={{ __html: formatAIContent(msg.content) }} />
+                  <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                 ) : (
                   msg.content
                 )}
@@ -120,7 +125,7 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
           {streamedContent && (
             <div className="flex justify-start">
               <div className="rounded-xl px-4 py-2 max-w-[80%] bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-border animate-pulse">
-                <span dangerouslySetInnerHTML={{ __html: formatAIContent(streamedContent) }} />
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{streamedContent}</ReactMarkdown>
               </div>
             </div>
           )}
@@ -172,19 +177,4 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
       </div>
     </div>
   );
-}
-
-function formatAIContent(content: string): string {
-  // Basic formatting: paragraphs, line breaks, code blocks
-  // Convert triple backticks to <pre><code>
-  let html = content
-    .replace(/```([\s\S]*?)```/g, (match, code) => `<pre class='bg-zinc-900 text-white rounded p-3 overflow-x-auto mb-2'><code>${escapeHtml(code)}</code></pre>`) // code blocks
-    .replace(/\n\n/g, '</p><p>') // paragraphs
-    .replace(/\n/g, '<br/>'); // line breaks
-  html = `<p>${html}</p>`;
-  return html;
-}
-
-function escapeHtml(str: string): string {
-  return str.replace(/[&<>'"]/g, tag => ({'&':'&amp;','<':'&lt;','>':'&gt;','\'':'&#39;','"':'&quot;'}[tag] || tag));
 } 

@@ -4,62 +4,112 @@ import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { User } from "lucide-react";
 import { useUserLocationInfo } from "@/components/userLocationInfo";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+
+const NAV_ITEMS = [
+  { id: "home", label: "Home" },
+  { id: "about", label: "About" },
+  { id: "skills", label: "Skills" },
+  { id: "projects", label: "Projects" },
+  { id: "contact", label: "Contact" },
+  { id: "blog", label: "Blog" },
+];
 
 export default function TitleBar({ title, children }: { title: string; children?: React.ReactNode }) {
-  const [activeSection, setActiveSection] = useState<string>("home");
+  const [activeSection, setActiveSection] = useState("home");
   const { theme, setTheme } = useTheme();
-  const [isLoading, setIsLoading] = useState(false);
-  const name = title;
   const userInfo = useUserLocationInfo();
   const pathname = usePathname();
+  const router = useRouter();
 
-  // Update active section based on current pathname
   useEffect(() => {
-    if (pathname === '/blog') {
-      setActiveSection('blog');
-    } else if (pathname === '/') {
-      setActiveSection('home');
+    if (pathname === "/blog") {
+      setActiveSection("blog");
+      return;
+    }
+
+    if (pathname === "/") {
+      const observer = new IntersectionObserver(
+        (entries) => {
+          for (const entry of entries) {
+            if (entry.isIntersecting) {
+              setActiveSection(entry.target.id);
+              break;
+            }
+          }
+        },
+        { rootMargin: "-40% 0px -60% 0px" } // Active when section is in the middle 20% of viewport
+      );
+
+      const homeSections = NAV_ITEMS.filter(item => item.id !== 'blog');
+      homeSections.forEach(({ id }) => {
+        const element = document.getElementById(id);
+        if (element) observer.observe(element);
+      });
+
+      return () => {
+        homeSections.forEach(({ id }) => {
+          const element = document.getElementById(id);
+          if (element) observer.unobserve(element);
+        });
+      };
     }
   }, [pathname]);
+
+  const handleNavClick = (id: string) => {
+    setActiveSection(id);
+
+    if (id === "blog") {
+      router.push("/blog");
+      return;
+    }
+
+    if (id === 'home' && pathname !== '/') {
+      router.push('/');
+      return;
+    }
+    
+    if (id === 'home' && pathname === '/'){
+        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+        return;
+    }
+
+    if (pathname === "/") {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    } else {
+      router.push(`/#${id}`);
+    }
+  };
 
   return (
     <header className="fixed justify-between top-0 left-0 right-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-md m-0 p-0">
       <div className="max-w-none w-full flex h-16 items-center justify-between px-4 md:px-20">
-        <Link href="/" className="flex items-center gap-2 font-medium">
+        <Link href="/" className="flex items-center gap-2 font-medium" onClick={() => setActiveSection('home')}>
           <div className="relative size-8 overflow-hidden rounded-full border border-primary/30">
             <span className="absolute inset-0 flex items-center justify-center text-primary">
               <User className="size-4" />
             </span>
           </div>
           <span className="text-lg font-medium tracking-tight">
-            {isLoading ? (
-              <span className="inline-block h-5 w-fit bg-muted animate-ping rounded" />
+            {userInfo?.name ? (
+              <>{userInfo?.name || title}</>
             ) : (
-              <>{userInfo?.name || name}</>
+              <span className="inline-block h-5 w-24 bg-muted animate-pulse rounded" />
             )}
           </span>
         </Link>
         <nav className="hidden md:flex gap-8">
-          {["home", "about", "skills", "projects", "contact", "blog"].map((item) => {
-            let href = "/";
-            if (item === "blog") href = "/blog";
-            else if (item !== "home") href = `/#${item}`;
-            // home = "/", blog = "/blog", others = "/#section"
-            return (
-              <Link
-                key={item}
-                href={href}
-                className={`text-sm font-medium transition-colors hover:text-primary ${
-                  activeSection === item ? "text-primary" : "text-muted-foreground"
-                }`}
-                onClick={() => setActiveSection(item)}
-                scroll={item !== "blog" && item !== "home"}
-              >
-                {item.charAt(0).toUpperCase() + item.slice(1)}
-              </Link>
-            );
-          })}
+          {NAV_ITEMS.map(({ id, label }) => (
+            <button
+              key={id}
+              onClick={() => handleNavClick(id)}
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                activeSection === id ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
         </nav>
         <div className="flex items-center gap-4">
           <button
