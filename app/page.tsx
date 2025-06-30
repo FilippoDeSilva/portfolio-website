@@ -380,13 +380,20 @@ export default function Home() {
                   );
                 })
               ) : (
-                <div className="col-span-full flex flex-col items-center justify-center py-16">
-                  <span className="relative flex h-12 w-12 mb-4">
-                    <span className="absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-30 animate-ping"></span>
-                    <span className="relative inline-flex rounded-full h-12 w-12 border-4 border-blue-500 border-t-transparent animate-spin"></span>
-                  </span>
-                  <p className="text-lg text-blue-600 font-semibold">Loading projects...</p>
-                </div>
+                <>
+                  {[...Array(6)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="animate-pulse rounded-2xl border border-border bg-gradient-to-br from-background to-muted/40 shadow-lg flex flex-col h-[400px] p-6"
+                    >
+                      <div className="h-40 w-full bg-muted/60 rounded-xl mb-4" />
+                      <div className="h-6 w-2/3 bg-muted/50 rounded mb-2" />
+                      <div className="h-4 w-1/2 bg-muted/40 rounded mb-4" />
+                      <div className="flex-1" />
+                      <div className="h-4 w-1/3 bg-muted/30 rounded mt-4" />
+                    </div>
+                  ))}
+                </>
               )}
             </div>
           </div>

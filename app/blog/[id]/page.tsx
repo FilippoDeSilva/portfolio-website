@@ -55,7 +55,57 @@ export default function BlogDetailPage() {
     });
   }, [post?.id]);
 
-  if (loading) return <div className="py-24 text-center">Loading...</div>;
+  if (loading) return (
+    <div className="py-24 flex flex-col items-center gap-8 animate-fade-in">
+      <div className="max-w-3xl w-full mx-auto">
+        <div className="rounded-2xl bg-gradient-to-br from-background/90 to-blue-50/60 dark:to-blue-950/40 shadow-xl border border-border p-0 flex flex-col gap-0 overflow-hidden relative">
+          {/* Cover Image Skeleton */}
+          <div className="relative w-full bg-gray-200 dark:bg-zinc-800 overflow-hidden animate-pulse" style={{ height: 360, maxHeight: 480 }}>
+            <div className="w-full h-full bg-muted/60" />
+          </div>
+          <div className="p-6 flex flex-col gap-6">
+            {/* Title Skeleton */}
+            <div className="h-10 w-2/3 bg-muted/40 rounded mb-4 animate-pulse" />
+            {/* Excerpt Skeleton */}
+            <div className="h-5 w-1/2 bg-muted/30 rounded mb-6 animate-pulse" />
+            {/* Content Skeleton */}
+            <div className="prose dark:prose-invert max-w-none text-lg leading-relaxed bg-white/80 dark:bg-zinc-900/70 rounded-xl p-6 shadow-inner border border-border">
+              <div className="h-4 w-full bg-muted/20 rounded mb-2 animate-pulse" />
+              <div className="h-4 w-5/6 bg-muted/20 rounded mb-2 animate-pulse" />
+              <div className="h-4 w-2/3 bg-muted/20 rounded mb-2 animate-pulse" />
+              <div className="h-4 w-1/2 bg-muted/20 rounded mb-2 animate-pulse" />
+              <div className="h-4 w-1/3 bg-muted/20 rounded mb-2 animate-pulse" />
+            </div>
+            {/* Attachments Skeleton */}
+            <div className="flex gap-4 mt-4">
+              {[...Array(2)].map((_, i) => (
+                <div key={i} className="w-32 h-24 bg-muted/30 rounded-lg animate-pulse" />
+              ))}
+            </div>
+            {/* Reactions & Comments Skeleton */}
+            <div className="flex gap-4 mt-8">
+              <div className="w-24 h-8 bg-muted/20 rounded-full animate-pulse" />
+              <div className="w-32 h-8 bg-muted/20 rounded-full animate-pulse" />
+            </div>
+            {/* Timestamp & View Count Skeleton */}
+            <div className="flex items-end justify-end mt-4 gap-3">
+              <div className="h-4 w-16 bg-muted/20 rounded animate-pulse" />
+              <div className="h-4 w-24 bg-muted/20 rounded animate-pulse" />
+            </div>
+          </div>
+        </div>
+        {/* Other Posts Skeleton */}
+        <div className="max-w-4xl mx-auto mt-8 rounded-2xl bg-gradient-to-br from-blue-50/60 via-background/80 to-blue-100/40 dark:from-blue-950/40 dark:via-background/80 dark:to-blue-900/30 shadow-lg border border-border p-8">
+          <div className="h-8 w-40 bg-muted/30 rounded mb-6 animate-pulse" />
+          <div className="grid grid-cols-2 gap-6">
+            {[...Array(2)].map((_, i) => (
+              <div key={i} className="h-40 bg-muted/20 rounded-xl animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
   if (error) return <div className="py-24 text-center text-red-500">Error: {error}</div>;
   if (!post) return <div className="py-24 text-center">Blog post not found.</div>;
 
