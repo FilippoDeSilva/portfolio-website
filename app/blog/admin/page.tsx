@@ -19,7 +19,7 @@ import Paragraph from '@tiptap/extension-paragraph';
 import { Button } from "@/components/ui/button";
 import { BlogCard } from "@/components/blog-card";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Eye, EyeOff, LogOut, MessageCircle, X } from "lucide-react";
+import { Eye, EyeOff, LogOut, Sparkles, X } from "lucide-react";
 import { Plus, Trash2, Upload, Check, RefreshCw, Paperclip, Send } from "lucide-react";
 import AIChatModal from "@/components/ui/ai-chat-modal";
 const lowlight = createLowlight();
@@ -442,7 +442,7 @@ export default function BlogAdmin() {
             onClick={() => setAIModalOpen(true)}
             aria-label="Open AI Assistant"
           >
-            <MessageCircle className="w-7 h-7" />
+            <Sparkles className="w-7 h-7 animate-pulse" />
           </Button>
           <AIChatModal open={aiModalOpen} onClose={() => setAIModalOpen(false)} onInsert={text => {
             setAIModalOpen(false);

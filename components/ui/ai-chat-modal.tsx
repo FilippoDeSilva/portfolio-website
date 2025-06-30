@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { MessageCircle, X, Send as Telegram, StopCircle } from "lucide-react";
+import { Sparkles, X, Send as Telegram, StopCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
@@ -96,7 +96,7 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
       <div className="bg-background dark:bg-zinc-900 rounded-lg shadow-lg max-w-md w-full p-0 relative flex flex-col border border-border h-[80vh] max-h-[600px]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2 font-semibold text-lg">
-            <MessageCircle className="w-6 h-6 text-primary" />
+            <Sparkles className="w-6 h-6 text-primary animate-pulse" />
             AI Writing Assistant
           </div>
           <button
@@ -145,6 +145,12 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={loading}
+            style={{ height: 'auto', overflow: 'hidden' }}
+            onInput={e => {
+              const target = e.target as HTMLTextAreaElement;
+              target.style.height = '40px';
+              target.style.height = target.scrollHeight + 'px';
+            }}
           />
           {streaming ? (
             <button
