@@ -138,7 +138,7 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
                 !streamedContent;
               return (
                 <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`relative rounded-xl px-4 py-2 max-w-[80%] whitespace-pre-line break-words ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-border"}`}>
+                  <div className={`relative rounded-xl px-4 py-2 max-w-[80%] whitespace-pre-line break-words break-all ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-border"}`}>
                     {msg.role === "assistant" ? (
                       <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
                     ) : (
@@ -171,7 +171,7 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
           )}
           {streamedContent && (
             <div className="flex justify-start">
-              <div className="rounded-xl px-4 py-2 max-w-[80%] bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-border animate-pulse break-words">
+              <div className="rounded-xl px-4 py-2 max-w-[80%] bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-border animate-pulse break-words break-all">
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>{streamedContent}</ReactMarkdown>
               </div>
             </div>
