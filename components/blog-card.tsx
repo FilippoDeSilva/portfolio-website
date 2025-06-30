@@ -48,6 +48,7 @@ export function BlogCard({
               title="Edit post"
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 onEdit();
               }}
               className="p-1.5 rounded-full bg-background/80 dark:bg-zinc-900/80 border border-border shadow hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
@@ -73,6 +74,7 @@ export function BlogCard({
               title="Delete post"
               onClick={(e) => {
                 e.stopPropagation();
+                e.preventDefault();
                 onDelete();
               }}
               className="p-1.5 rounded-full bg-background/80 dark:bg-zinc-900/80 border border-border shadow hover:bg-red-100 dark:hover:bg-red-900 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 transition"

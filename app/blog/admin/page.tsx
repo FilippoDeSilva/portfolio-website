@@ -4,7 +4,8 @@ import { supabase } from "@/lib/supabaseClient";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Image from "@tiptap/extension-image";
-import Link from "@tiptap/extension-link";
+import { Link as TiptapLink } from "@tiptap/extension-link";
+import NextLink from 'next/link';
 import Underline from "@tiptap/extension-underline";
 import Highlight from "@tiptap/extension-highlight";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
@@ -22,6 +23,8 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Eye, EyeOff, LogOut, Sparkles, X } from "lucide-react";
 import { Plus, Trash2, Upload, Check, RefreshCw, Paperclip, Send } from "lucide-react";
 import AIChatModal from "@/components/ui/ai-chat-modal";
+import Link from "next/link";
+import { Pagination } from "@/components/ui/pagination";
 const lowlight = createLowlight();
 lowlight.register({ javascript });
 
@@ -179,7 +182,7 @@ export default function BlogAdmin() {
           class: "rounded-lg shadow max-w-full h-auto my-4",
         },
       }),
-      Link,
+      TiptapLink,
       Underline,
       Highlight,
       CodeBlockLowlight.configure({ lowlight }),
@@ -199,6 +202,9 @@ export default function BlogAdmin() {
     // Fix SSR hydration warning
     immediatelyRender: false,
   });
+
+  const POSTS_PER_PAGE = 4;
+  const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -342,6 +348,10 @@ export default function BlogAdmin() {
       editor.commands.focus();
     }
   }
+
+  // Calculate paginated posts
+  const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
+  const paginatedPosts = posts.slice((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE);
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-background text-foreground min-h-screen">
@@ -643,17 +653,25 @@ export default function BlogAdmin() {
                 {posts.length === 0 ? (
                   <p className="text-gray-500 text-sm">No posts found.</p>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-4">
-                    {posts.map((post) => (
-                      <BlogCard
-                        key={post.id}
-                        post={post}
-                        previewOnly={true}
-                        onEdit={() => handleEdit(post)}
-                        onDelete={() => setDeleteModal({ open: true, postId: post.id })}
-                      />
-                    ))}
-                  </div>
+                  <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2 gap-4">
+                      {paginatedPosts.map((post) => (
+                        <Link href={`/blog/${post.id}`} key={post.id} target="_blank" rel="noopener noreferrer" className="block group">
+                          <BlogCard
+                            post={post}
+                            previewOnly={true}
+                            onEdit={() => handleEdit(post)}
+                            onDelete={() => setDeleteModal({ open: true, postId: post.id })}
+                          />
+                        </Link>
+                      ))}
+                    </div>
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      onPageChange={setCurrentPage}
+                    />
+                  </>
                 )}
               </div>
             </div>
