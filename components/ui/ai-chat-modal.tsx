@@ -21,6 +21,12 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
   const abortControllerRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    if (open) {
+      setTimeout(() => textareaRef.current?.focus(), 100); // Small delay for browser rendering
+    }
+  }, [open]);
+
+  useEffect(() => {
     if (open && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
@@ -28,8 +34,18 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
 
   async function handleSend() {
     if (!input.trim()) return;
-    const blogInstruction =
-      "Format your response as a ready-to-post Markdown blog article. Use clear headings, lists, links, and a friendly, cozy tone. Do not include any extra explanations or meta-comments. The output should require minimal to no edits before posting.";
+    // const blogInstruction =
+    //   "Format your response as a ready-to-post Markdown blog article. Use clear headings, lists, links, and a friendly, cozy tone. Do not include any extra explanations or meta-comments. The output should require minimal to no edits before posting.";
+    const blogInstruction = `
+You'll be talking to the blog admin so act accordingly. Write the response as a ready-to-publish Markdown blog post written by the blog's human author. 
+Use clear headings, bullet points or numbered lists when helpful, and include relevant links where appropriate. 
+Maintain a warm, cozy, and professional tone throughout.
+
+Do not refer to the AI or explain the writing process. 
+Write naturally, as if the blog author is speaking directly to their readers. 
+The final post should be polished and require little to no editing before publishing.
+`;
+
     const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
