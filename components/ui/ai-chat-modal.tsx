@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Sparkles, X, Send as Telegram, StopCircle } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { marked } from "marked";
 
 interface Message {
   role: "user" | "assistant";
@@ -27,6 +28,8 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
 
   async function handleSend() {
     if (!input.trim()) return;
+    const blogInstruction =
+      "Format your response as a ready-to-post Markdown blog article. Use clear headings, lists, links, and a friendly, cozy tone. Do not include any extra explanations or meta-comments. The output should require minimal to no edits before posting.";
     const userMessage: Message = { role: "user", content: input };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
@@ -39,7 +42,7 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
       const res = await fetch("/api/ai-assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: input, stream: true }),
+        body: JSON.stringify({ prompt: `${blogInstruction}\n\n${input}`, stream: true }),
         signal: abortControllerRef.current.signal,
       });
       if (!res.body) throw new Error("No response body");
@@ -79,7 +82,8 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
   }
 
   function handleInsert(content: string) {
-    onInsert(content);
+    const html = typeof marked.parse === 'function' ? marked.parse(content) : marked(content);
+    onInsert(html as string);
     onClose();
   }
 
@@ -138,8 +142,8 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
         >
           <textarea
             ref={textareaRef}
-            className="flex-1 rounded border border-border p-2 resize-none min-h-[40px] max-h-32"
-            rows={1}
+            className="flex-1 rounded border border-border p-2 resize-none min-h-[120px] max-h-[400px] text-base px-4 py-3 bg-white dark:bg-zinc-900 shadow-inner focus:outline-none focus:ring-2 focus:ring-primary/30 transition placeholder:text-gray-400 dark:placeholder:text-gray-400"
+            rows={4}
             placeholder="Type your message..."
             value={input}
             onChange={e => setInput(e.target.value)}
@@ -148,10 +152,13 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
             style={{ height: 'auto', overflow: 'hidden' }}
             onInput={e => {
               const target = e.target as HTMLTextAreaElement;
-              target.style.height = '40px';
+              target.style.height = '120px';
               target.style.height = target.scrollHeight + 'px';
             }}
           />
+          <div className="text-xs text-muted-foreground mt-1 mb-2">
+            <span>AI will generate a ready-to-post Markdown blog article.</span>
+          </div>
           {streaming ? (
             <button
               type="button"
