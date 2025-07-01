@@ -30,6 +30,9 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
     if (open && chatEndRef.current) {
       chatEndRef.current.scrollIntoView({ behavior: "smooth" });
     }
+    if (open) {
+      setTimeout(() => textareaRef.current?.focus(), 100);
+    }
   }, [messages, streamedContent, open]);
 
   async function handleSend() {
@@ -133,6 +136,7 @@ The final post should be polished and require little to no editing before publis
   function handleInsert(content: string) {
     const html = typeof marked.parse === 'function' ? marked.parse(content) : marked(content);
     onInsert(html as string);
+    setTimeout(() => textareaRef.current?.focus(), 100);
     onClose();
   }
 
@@ -167,26 +171,22 @@ The final post should be polished and require little to no editing before publis
           {/* AI/Chat messages */}
           <>
             {messages.map((msg, idx) => {
-              const isLastAI =
-                msg.role === "assistant" &&
-                idx === messages.length - 1 &&
-                !streamedContent;
               return (
                 <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
                   <div className={`relative rounded-xl px-4 py-2 max-w-[80%] whitespace-pre-line break-words ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-border"}`}>
                     {msg.role === "assistant" ? (
-                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                      <>
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                        <button
+                          className="absolute bottom-0 -right-2 p-1 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all duration-200 hover:scale-110"
+                          title="Insert this response into the blog editor"
+                          onClick={() => handleInsert(msg.content)}
+                        >
+                          <Plus className="w-4 h-4" />
+                        </button>
+                      </>
                     ) : (
                       msg.content
-                    )}
-                    {isLastAI && (
-                      <button
-                        className="absolute bottom-0 -right-2 p-1 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all duration-200 hover:scale-110"
-                        title="Insert this response into the blog editor"
-                        onClick={() => handleInsert(msg.content)}
-                      >
-                        <Plus className="w-4 h-4" />
-                      </button>
                     )}
                   </div>
                 </div>

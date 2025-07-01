@@ -62,8 +62,9 @@ const nextConfig = {
       { protocol: "https", hostname: "media.istockphoto.com", pathname: "/**" }, // Istock
       { protocol: "https", hostname: "opengraph.githubassets.com", pathname: "/**" }, // GitHub Open Graph images
       { protocol: "https", hostname: "github.com", pathname: "/**" }, // GitHub repository pages
-      { protocol: "https", hostname: "via.placeholder.com", pathname: "/**" }, // Placeholder images for deployed projects
-    ],
+      // { protocol: "https", hostname: "via.placeholder.com", pathname: "/**" }, // Placeholder images for deployed projects
+      { protocol: "https", hostname: "image.thum.io", pathname: "/**" }, // Thumb.io
+    ], 
   },
 
   experimental: {

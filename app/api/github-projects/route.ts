@@ -16,28 +16,43 @@ export async function GET(req: NextRequest) {
     "Class-Unity",
     "FilippoDeSilva",
     "wlext",
+    "portfolio-website",
     "dotfiles"
   ];
   const filtered = data.filter((repo: any) => !repo.fork && !excludedNames.includes(repo.name));
   // Map to include only relevant fields, including stars, forks, etc.
-  const mapped = filtered.map((repo: any) => ({
-    id: repo.id,
-    name: repo.name,
-    description: repo.description,
-    html_url: repo.html_url,
-    homepage: repo.homepage,
-    topics: repo.topics,
-    stargazers_count: repo.stargazers_count, // likes
-    forks_count: repo.forks_count,
-    watchers_count: repo.watchers_count,
-    language: repo.language,
-    created_at: repo.created_at,
-    updated_at: repo.updated_at,
-    owner: {
-      login: repo.owner.login,
-      avatar_url: repo.owner.avatar_url,
-    },
-    image: `https://opengraph.githubassets.com/1/${repo.owner.login}/${repo.name}`, // <-- Add this line
-  }));
+  const mapped = filtered.map((repo: any) => {
+    const isDeployed = repo.homepage && repo.homepage !== '' && repo.homepage !== '#';
+    const projectImage = isDeployed
+      ? `https://image.thum.io/get/width/800/crop/768/${repo.homepage}`
+      : `https://opengraph.githubassets.com/1/${repo.owner.login}/${repo.name}`;
+    console.log('[Project Mapping]', {
+      name: repo.name,
+      homepage: repo.homepage,
+      isDeployed,
+      projectImage,
+      githubOgImage: `https://opengraph.githubassets.com/1/${repo.owner.login}/${repo.name}`
+    });
+    return {
+      id: repo.id,
+      name: repo.name,
+      description: repo.description,
+      html_url: repo.html_url,
+      homepage: repo.homepage,
+      topics: repo.topics,
+      stargazers_count: repo.stargazers_count, // likes
+      forks_count: repo.forks_count,
+      watchers_count: repo.watchers_count,
+      language: repo.language,
+      created_at: repo.created_at,
+      updated_at: repo.updated_at,
+      owner: {
+        login: repo.owner.login,
+        avatar_url: repo.owner.avatar_url,
+      },
+      image: projectImage,
+    };
+  });
+  console.log('[API] Returning mapped projects:', mapped.map((p: any) => ({ name: p.name, image: p.image, homepage: p.homepage })));
   return NextResponse.json(mapped);
 }
