@@ -223,19 +223,14 @@ The final post should be polished and require little to no editing before publis
         >
           <textarea
             ref={textareaRef}
-            className="flex-1 rounded border border-border p-2 resize-none min-h-[120px] max-h-[400px] text-base px-4 py-3 bg-white dark:bg-zinc-900 shadow-inner focus:outline-none focus:ring-2 focus:ring-primary/30 transition placeholder:text-gray-400 dark:placeholder:text-gray-400"
+            className="flex-1 rounded border border-border p-2 resize-none min-h-[100px] max-h-[100px] text-base px-4 py-3 bg-white dark:bg-zinc-900 shadow-inner focus:outline-none focus:ring-2 focus:ring-primary/30 transition placeholder:text-gray-400 dark:placeholder:text-gray-400"
             rows={4}
             placeholder="Type your message..."
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={loading}
-            style={{ height: 'auto', overflow: 'hidden' }}
-            onInput={e => {
-              const target = e.target as HTMLTextAreaElement;
-              target.style.height = '120px';
-              target.style.height = target.scrollHeight + 'px';
-            }}
+            style={{ height: '120px', overflow: 'auto' }}
           />
           {streaming ? (
             <button
