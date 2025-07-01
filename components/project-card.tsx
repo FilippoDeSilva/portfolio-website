@@ -102,8 +102,8 @@ export function ProjectCard({ project }: { project: Project }) {
         <img
           src={computedImgSrc}
           alt={project.title}
-          className={`object-cover w-full h-full${!project.isDeployed ? ' dark:invert' : ''}`}
-          style={{ aspectRatio: "16/9" }}
+          className={`w-full h-full absolute inset-0 ${project.isDeployed ? 'object-cover' : 'object-contain p-8 dark:invert'}`}
+          style={{ aspectRatio: "16/9", background: !project.isDeployed ? 'transparent' : undefined }}
           onError={handleImgError}
         />
         
