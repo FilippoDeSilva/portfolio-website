@@ -52,13 +52,13 @@ export function ProjectCard({ project }: { project: Project }) {
   function handleImgError(e: React.SyntheticEvent<HTMLImageElement, Event>) {
     if (!hasError) {
       setHasError(true);
-      // Try GitHub Open Graph image first
-      if (imgSrc !== project.githubOgImage && project.githubOgImage) {
+      // Fallback: if deployed and screenshot fails, use GitHub OG image
+      if (project.isDeployed && project.githubOgImage && imgSrc !== project.githubOgImage) {
         setImgSrc(project.githubOgImage);
-        console.warn("Thum.io image failed, switching to GitHub OG image for:", project.title, imgSrc);
+        console.warn("Screenshot failed, switching to GitHub OG image for:", project.title, imgSrc);
       } else if (imgSrc !== "/placeholder.svg") {
         setImgSrc("/placeholder.svg");
-        console.warn("Both Thum.io and GitHub OG images failed, using placeholder for:", project.title, imgSrc);
+        console.warn("All images failed, using placeholder for:", project.title, imgSrc);
       }
     } else {
       setImgSrc("/placeholder.svg");
@@ -96,14 +96,24 @@ export function ProjectCard({ project }: { project: Project }) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative aspect-video overflow-hidden">
-        {isValidUrl(computedImgSrc) && (
-          <Image
+        {project.isDeployed ? (
+          <img
             src={computedImgSrc}
             alt={project.title}
-            fill
-            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            className="object-cover w-full h-full"
+            style={{ aspectRatio: "16/9" }}
             onError={handleImgError}
           />
+        ) : (
+          isValidUrl(computedImgSrc) && (
+            <Image
+              src={computedImgSrc}
+              alt={project.title}
+              fill
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
+              onError={handleImgError}
+            />
+          )
         )}
         
         <motion.div

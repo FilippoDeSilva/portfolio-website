@@ -352,7 +352,6 @@ export default function Home() {
             <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {githubProjects.length > 0 ? (
                 githubProjects.map((repo: any, index: number) => {
-                  const { screenshot, githubOgImage, isDeployed } = getProjectImage(repo);
                   return (
                     <motion.div
                       key={repo.id}
@@ -365,15 +364,15 @@ export default function Home() {
                         project={{
                           title: repo.name,
                           description: repo.description || "",
-                          image: screenshot || "/placeholder.svg",
-                          githubOgImage,
+                          image: repo.image || "/placeholder.svg",
+                          githubOgImage: `https://opengraph.githubassets.com/1/${repo.owner?.login || "FilippoDeSilva"}/${repo.name}`,
                           tags: repo.topics || [],
                           link: repo.homepage || "#",
                           github: repo.html_url || "#",
                           stars: repo.stargazers_count,
                           forks: repo.forks_count,
                           watchers: repo.watchers_count,
-                          isDeployed,
+                          isDeployed: repo.homepage && repo.homepage !== '' && repo.homepage !== '#',
                         }}
                       />
                     </motion.div>
@@ -473,16 +472,4 @@ export default function Home() {
       </footer>
     </div>
   );
-}
-
-function getProjectImage(repo: any) {
-  const screenshot = repo.screenshot || undefined;
-  const githubOgImage = repo.html_url ? `https://opengraph.githubassets.com/1/${repo.full_name}` : undefined;
-  const isDeployed = repo.homepage && repo.homepage !== '' && repo.homepage !== '#';
-  
-  return {
-    screenshot,
-    githubOgImage,
-    isDeployed
-  };
 }
