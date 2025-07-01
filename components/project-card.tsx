@@ -77,8 +77,11 @@ export function ProjectCard({ project }: { project: Project }) {
     }
   };
 
-  // Always use the backend-provided image
-  const computedImgSrc = isValidUrl(project.image) ? project.image : "/placeholder.svg";
+  // Always use the backend-provided image for deployed, GitHub logo for non-deployed
+  const githubLogo = "/github-mark.svg";
+  const computedImgSrc = project.isDeployed && isValidUrl(project.image)
+    ? project.image
+    : githubLogo;
 
   useEffect(() => {
     console.log("ProjectCard project prop:", project);
@@ -91,30 +94,18 @@ export function ProjectCard({ project }: { project: Project }) {
 
   return (
     <Card
-      className="overflow-hidden group h-full flex flex-col border-border/50 transition-all duration-300 hover:shadow-md"
+      className="overflow-hidden group h-full flex flex-col border border-border bg-card text-card-foreground transition-all duration-300 hover:shadow-md"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative aspect-video overflow-hidden">
-        {project.isDeployed ? (
-          <img
-            src={computedImgSrc}
-            alt={project.title}
-            className="object-cover w-full h-full"
-            style={{ aspectRatio: "16/9" }}
-            onError={handleImgError}
-          />
-        ) : (
-          isValidUrl(computedImgSrc) && (
-            <Image
-              src={computedImgSrc}
-              alt={project.title}
-              fill
-              className="object-cover transition-transform duration-500 group-hover:scale-105"
-              onError={handleImgError}
-            />
-          )
-        )}
+        <img
+          src={computedImgSrc}
+          alt={project.title}
+          className={`object-cover w-full h-full${!project.isDeployed ? ' dark:invert' : ''}`}
+          style={{ aspectRatio: "16/9" }}
+          onError={handleImgError}
+        />
         
         <motion.div
           initial={{ opacity: 0 }}
