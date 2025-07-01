@@ -33,6 +33,10 @@ export function ProjectCard({ project }: { project: Project }) {
     setHasError(false)
   }, [project.image])
 
+  useEffect(() => {
+    console.log("Rendering ProjectCard image src:", imgSrc);
+  }, [imgSrc]);
+
   // Always reset to screenshot on hover, so user can retry loading screenshot
   useEffect(() => {
     if (isHovered && project.image && !hasError) {
@@ -40,22 +44,29 @@ export function ProjectCard({ project }: { project: Project }) {
     }
   }, [isHovered, project.image, hasError])
 
-  function handleImgError() {
+  useEffect(() => {
+    console.log("ProjectCard project prop:", project);
+    console.log("Initial imgSrc for", project.title, ":", project.image);
+  }, [project]);
+
+  function handleImgError(e: React.SyntheticEvent<HTMLImageElement, Event>) {
     if (!hasError) {
-      setHasError(true)
+      setHasError(true);
       // Try GitHub Open Graph image first
       if (imgSrc !== project.githubOgImage && project.githubOgImage) {
-        setImgSrc(project.githubOgImage)
+        setImgSrc(project.githubOgImage);
+        console.warn("Thum.io image failed, switching to GitHub OG image for:", project.title, imgSrc);
       } else if (imgSrc !== "/placeholder.svg") {
-        setImgSrc("/placeholder.svg")
+        setImgSrc("/placeholder.svg");
+        console.warn("Both Thum.io and GitHub OG images failed, using placeholder for:", project.title, imgSrc);
       }
     } else {
-      // If GitHub Open Graph also fails, use placeholder
-      setImgSrc("/placeholder.svg")
+      setImgSrc("/placeholder.svg");
+      console.warn("All image fallbacks failed for:", project.title, imgSrc);
     }
   }
 
-  // Validate URLs
+  // Utility to check for valid URL
   const isValidUrl = (url?: string) => {
     if (!url) return false;
     try {
@@ -66,6 +77,15 @@ export function ProjectCard({ project }: { project: Project }) {
     }
   };
 
+  // Always use the backend-provided image
+  const computedImgSrc = isValidUrl(project.image) ? project.image : "/placeholder.svg";
+
+  useEffect(() => {
+    console.log("ProjectCard project prop:", project);
+    console.log("Computed image src for", project.title, ":", computedImgSrc);
+  }, [project, computedImgSrc]);
+
+  // Validate URLs
   const hasValidLiveLink = isValidUrl(project.link) && project.link !== '#';
   const hasValidGithubLink = isValidUrl(project.github);
 
@@ -76,13 +96,15 @@ export function ProjectCard({ project }: { project: Project }) {
       onMouseLeave={() => setIsHovered(false)}
     >
       <div className="relative aspect-video overflow-hidden">
-        <Image
-          src={imgSrc}
-          alt={project.title}
-          fill
-          className="object-fill transition-transform duration-500 group-hover:scale-105"
-          onError={handleImgError}
-        />
+        {isValidUrl(computedImgSrc) && (
+          <Image
+            src={computedImgSrc}
+            alt={project.title}
+            fill
+            className="object-cover transition-transform duration-500 group-hover:scale-105"
+            onError={handleImgError}
+          />
+        )}
         
         <motion.div
           initial={{ opacity: 0 }}

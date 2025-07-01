@@ -64,6 +64,8 @@ const nextConfig = {
       { protocol: "https", hostname: "github.com", pathname: "/**" }, // GitHub repository pages
       // { protocol: "https", hostname: "via.placeholder.com", pathname: "/**" }, // Placeholder images for deployed projects
       { protocol: "https", hostname: "image.thum.io", pathname: "/**" }, // Thumb.io
+      { protocol: "https", hostname: "api.microlink.io", pathname: "/**" }, // Microlink
+      { protocol: "https", hostname: "cdn.microlink.io", pathname: "/**" }, // Microlink CDN
     ], 
   },
 
