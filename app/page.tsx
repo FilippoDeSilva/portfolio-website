@@ -441,7 +441,7 @@ export default function Home() {
                     <span className="sr-only">GitHub</span>
                   </Link>
                   <Link
-                    href="https://web.telegram.org/k/#@Lt_Col_Sam"
+                    href="https://t.me/Lt_Col_Sam"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-primary transition-colors"
