@@ -1,9 +1,16 @@
 import { NextRequest } from "next/server";
-import ModelClient, { isUnexpected } from "@azure-rest/ai-inference";
-import { AzureKeyCredential } from "@azure/core-auth";
+import OpenAI from "openai";
 
 const endpoint = "https://models.github.ai/inference";
-const model = "openai/gpt-4.1"; // or "openai/gpt-4o" if that's your model
+
+// Available models on GitHub AI - ordered by capability (best first)
+const availableModels = {
+  "gpt-4o": "openai/gpt-4o",           // GPT-4 Omni - Latest and most capable
+  "gpt-4o-mini": "openai/gpt-4o-mini", // GPT-4 Omni Mini - Fast and efficient
+  "gpt-4-turbo": "openai/gpt-4",       // GPT-4 Classic - Reliable and powerful
+  "gpt-3.5-turbo": "openai/gpt-3.5-turbo" // GPT-3.5 Turbo - Fastest and cheapest
+};
+
 const systemPrompt = `
 You are a helpful AI writing assistant for a personal blog, chatting with the blog's author.
 
@@ -19,93 +26,81 @@ export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt } = await req.json();
+    const { prompt, model: requestedModel = "gpt-4o", stream = false } = await req.json();
     const token = process.env["GITHUB_TOKEN"];
     if (!token) {
       return new Response(JSON.stringify({ error: "GitHub API token not set." }), { status: 500 });
     }
 
-    const client = ModelClient(endpoint, new AzureKeyCredential(token));
-    console.log("[AI API] Sending request to Azure OpenAI...");
-    const response = await client.path("/chat/completions").post({
-      body: {
+    // Validate and get the model
+    const model = availableModels[requestedModel as keyof typeof availableModels];
+    if (!model) {
+      return new Response(JSON.stringify({ 
+        error: `Invalid model. Available models: ${Object.keys(availableModels).join(", ")}` 
+      }), { status: 400 });
+    }
+
+    const client = new OpenAI({ baseURL: endpoint, apiKey: token });
+    console.log(`[AI API] Sending request to GitHub AI with model: ${requestedModel} (${model})...`);
+    
+    if (stream) {
+      // Handle streaming response
+      const response = await client.chat.completions.create({
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: prompt }
         ],
-        temperature: 1,
-        top_p: 1,
-        model,
+        model: model,
         stream: true
-      }
-    });
+      });
 
-    if (isUnexpected(response)) {
-      const errorBody = response.body as any;
-      console.error("[AI API] Azure returned error:", errorBody.error?.message);
-      return new Response(JSON.stringify({ error: errorBody.error?.message || "GitHub AI API error." }), { status: 500 });
-    }
-
-    // Stream the response as plain text chunks, robustly handling single-character chunks
-    const stream = response.body as any;
-    const encoder = new TextEncoder();
-
-    const readableStream = new ReadableStream({
-      async start(controller) {
-        let buffer = "";
-        try {
-          for await (const chunk of stream) {
-            buffer += typeof chunk === "string" ? chunk : String(chunk);
-            // Try to extract all complete JSON objects from the buffer
-            let startIdx = buffer.indexOf("{");
-            while (startIdx !== -1) {
-              let braceCount = 0;
-              let endIdx = -1;
-              for (let i = startIdx; i < buffer.length; i++) {
-                if (buffer[i] === "{") braceCount++;
-                if (buffer[i] === "}") braceCount--;
-                if (braceCount === 0) {
-                  endIdx = i;
-                  break;
-                }
-              }
-              if (endIdx !== -1) {
-                const jsonStr = buffer.slice(startIdx, endIdx + 1);
-                try {
-                  const event = JSON.parse(jsonStr);
-                  const content = event.choices?.[0]?.delta?.content;
-                  if (content) {
-                    controller.enqueue(encoder.encode(content));
-                  }
-                } catch (e) {
-                  // Ignore parse errors, could be incomplete
-                }
-                buffer = buffer.slice(endIdx + 1);
-                startIdx = buffer.indexOf("{");
-              } else {
-                // Wait for more data
-                break;
+      console.log(`[AI API] Streaming response from ${requestedModel}`);
+      
+      const stream = new ReadableStream({
+        async start(controller) {
+          try {
+            for await (const chunk of response) {
+              const content = chunk.choices[0]?.delta?.content;
+              if (content) {
+                controller.enqueue(new TextEncoder().encode(content));
               }
             }
+            controller.close();
+          } catch (error) {
+            console.error("[AI API] Streaming error:", error);
+            controller.error(error);
           }
-        } catch (e) {
-          console.error("[AI API] Error while reading stream:", e);
-          controller.error(e);
-        } finally {
-          controller.close();
         }
-      }
-    });
+      });
 
-    return new Response(readableStream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-cache",
-        "Connection": "keep-alive",
-        "Transfer-Encoding": "chunked",
-        "Access-Control-Allow-Origin": "*" // for debugging
-      }
-    });
+      return new Response(stream, {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-cache",
+          "Connection": "keep-alive"
+        }
+      });
+    } else {
+      // Handle non-streaming response
+      const response = await client.chat.completions.create({
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: prompt }
+        ],
+        model: model
+      });
+
+      console.log(`[AI API] Response received successfully from ${requestedModel}`);
+      
+      // Return the response content directly (no streaming)
+      const content = response.choices[0].message.content || "No response content";
+      return new Response(content, {
+        headers: {
+          "Content-Type": "text/plain; charset=utf-8",
+          "Cache-Control": "no-cache"
+        }
+      });
+    }
   } catch (err: any) {
     console.error("[AI API] Handler error:", err);
     return new Response(JSON.stringify({ error: err.message || "Unknown error" }), { status: 500 });
