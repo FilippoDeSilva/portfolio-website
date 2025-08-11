@@ -2,17 +2,21 @@
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
-import { User } from "lucide-react";
+import { Menu, User, X } from "lucide-react";
 import { useUserLocationInfo } from "@/components/userLocationInfo";
 import { usePathname, useRouter } from "next/navigation";
+import { Button } from "./ui/button";
+import { AnimatePresence, motion } from "framer-motion";
+import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetOverlay } from "@/components/ui/sheet";
+import { useIsMobile } from "@/components/ui/use-mobile";
 
 const NAV_ITEMS = [
-  { id: "home", label: "Home" },
-  { id: "about", label: "About" },
-  { id: "skills", label: "Skills" },
-  { id: "projects", label: "Projects" },
-  { id: "contact", label: "Contact" },
-  { id: "blog", label: "Blog" },
+  { id: "home", label: "Home", href: "/" },
+  { id: "about", label: "About", href: "/#about" },
+  { id: "skills", label: "Skills", href: "/#skills" },
+  { id: "projects", label: "Projects", href: "/#projects" },
+  { id: "contact", label: "Contact", href: "/#contact" },
+  { id: "blog", label: "Blog", href: "/blog" },
 ];
 
 export default function TitleBar({ title, children }: { title: string; children?: React.ReactNode }) {
@@ -21,6 +25,9 @@ export default function TitleBar({ title, children }: { title: string; children?
   const userInfo = useUserLocationInfo();
   const pathname = usePathname();
   const router = useRouter();
+
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     // Set Blog as active for /blog, /blog/[id], and /blog/admin
@@ -85,6 +92,10 @@ export default function TitleBar({ title, children }: { title: string; children?
       router.push(`/#${id}`);
     }
   };
+  // Close mobile menu when route changes
+  useEffect(() => {
+    setIsMobileMenuOpen(false)
+  }, [pathname])
 
   return (
     <header className="fixed justify-between top-0 left-0 right-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-md m-0 p-0">
@@ -132,9 +143,80 @@ export default function TitleBar({ title, children }: { title: string; children?
               </svg>
             )}
           </button>
+          {/* Hamburger Button */}
+          <button
+            aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
+            className="rounded-full p-2 hover:bg-primary/10 transition-colors focus:outline-none focus:ring-2 focus:ring-primary md:hidden"
+            onClick={() => setIsMobileMenuOpen((open) => !open)}
+            aria-expanded={isMobileMenuOpen}
+            aria-controls="mobile-menu"
+            style={{ width: 40, height: 40 }}
+          >
+            {isMobileMenuOpen ? (
+              <X className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            ) : (
+              <Menu className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+            )}
+          </button>
           {children}
         </div>
       </div>
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <>
+            {/* Overlay */}
+            <motion.div
+              key="mobile-menu-overlay"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
+              className="fixed inset-0 top-16 z-40 bg-black/40 md:hidden"
+              aria-hidden="true"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            {/* Menu */}
+            <motion.nav
+              key="mobile-menu"
+              id="mobile-menu"
+              initial={{ y: -32, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -32, opacity: 0 }}
+              transition={{ duration: 0.32, ease: [0.4, 0, 0.2, 1] }}
+              className="fixed left-0 right-0 top-16 z-50 h-[calc(100vh-4rem)] bg-background/95 shadow-2xl flex flex-col items-center justify-center md:hidden rounded-b-2xl"
+              role="dialog"
+              aria-modal="true"
+              tabIndex={-1}
+              onClick={e => e.stopPropagation()}
+            >
+              <ul className="w-full flex flex-col items-center gap-4 px-4">
+                {NAV_ITEMS.map(({ id, label, href }) => (
+                  <li key={id} className="w-full">
+                    <a
+                      href={href}
+                      onClick={e => {
+                        e.stopPropagation();
+                        handleNavClick(id);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`block w-full text-center py-3 px-4 rounded-lg text-lg font-semibold transition-colors ${
+                        activeSection === id
+                          ? "bg-primary/10 text-primary"
+                          : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800"
+                      }`}
+                      tabIndex={0}
+                      aria-current={activeSection === id ? "page" : undefined}
+                    >
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </motion.nav>
+          </>
+        )}
+      </AnimatePresence>
     </header>
   );
 }

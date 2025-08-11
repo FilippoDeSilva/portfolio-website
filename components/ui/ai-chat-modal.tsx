@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, X, Send as Telegram, StopCircle, Plus, ChevronDown } from "lucide-react";
+import { Sparkles, X, Send as Telegram, StopCircle, Plus, ChevronDown, Trash2 } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { marked } from "marked";
@@ -7,7 +7,11 @@ import { marked } from "marked";
 interface Message {
   role: "user" | "assistant";
   content: string;
+  timestamp: Date;
 }
+
+// Local storage key for chat history
+const CHAT_HISTORY_KEY = "ai-chat-history";
 
 export default function AIChatModal({ open, onClose, onInsert }: { open: boolean; onClose: () => void; onInsert: (text: string) => void }) {
   const [input, setInput] = useState("");
@@ -29,6 +33,37 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
     { id: "gpt-4-turbo", name: "GPT-4 Turbo", description: "Powerful & reliable" },
     { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo", description: "Fastest & most affordable" }
   ];
+
+  // Load chat history from localStorage on component mount
+  useEffect(() => {
+    try {
+      const savedHistory = localStorage.getItem(CHAT_HISTORY_KEY);
+      if (savedHistory) {
+        const parsedHistory = JSON.parse(savedHistory);
+        // Convert timestamp strings back to Date objects
+        const messagesWithDates = parsedHistory.map((msg: any) => ({
+          ...msg,
+          timestamp: new Date(msg.timestamp)
+        }));
+        setMessages(messagesWithDates);
+        console.log('📱 [Memory] Loaded chat history from localStorage:', messagesWithDates.length, 'messages');
+      }
+    } catch (error) {
+      console.error('❌ [Memory] Failed to load chat history:', error);
+    }
+  }, []);
+
+  // Save chat history to localStorage whenever messages change
+  useEffect(() => {
+    if (messages.length > 0) {
+      try {
+        localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
+        console.log('💾 [Memory] Saved chat history to localStorage:', messages.length, 'messages');
+      } catch (error) {
+        console.error('❌ [Memory] Failed to save chat history:', error);
+      }
+    }
+  }, [messages]);
 
   useEffect(() => {
     if (open) {
@@ -57,10 +92,20 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showModelDropdown]);
 
+  // Clear chat history
+  const clearChat = () => {
+    setMessages([]);
+    setError(null);
+    setStreamedContent("");
+    // Also clear from localStorage
+    localStorage.removeItem(CHAT_HISTORY_KEY);
+    console.log('🗑️ [Memory] Cleared chat history from localStorage');
+  };
+
   async function handleSend() {
     if (!input.trim()) return;
 
-    const userMessage: Message = { role: "user", content: input };
+    const userMessage: Message = { role: "user", content: input, timestamp: new Date() };
     setMessages((prev) => [...prev, userMessage]);
     setInput("");
     setLoading(true);
@@ -97,12 +142,30 @@ The final post should be polished and require little to no editing before publis
       prompt = `${blogInstruction}\n\n${input}`;
     }
 
+    // Prepare conversation context for memory
+    const conversationContext = messages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }));
+
+    // Debug logging for memory
+    console.log('🔍 [Memory Debug] Sending conversation history:', {
+      messageCount: messages.length,
+      conversationContext: conversationContext,
+      currentPrompt: prompt
+    });
+
     abortControllerRef.current = new AbortController();
     try {
       const res = await fetch("/api/ai-assistant", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt, stream: true, model: selectedModel }),
+        body: JSON.stringify({ 
+          prompt, 
+          stream: true, 
+          model: selectedModel,
+          conversationHistory: conversationContext
+        }),
         signal: abortControllerRef.current.signal,
       });
 
@@ -132,7 +195,8 @@ The final post should be polished and require little to no editing before publis
         }
       }
       if (aiContent) {
-        setMessages((prev) => [...prev, { role: "assistant", content: aiContent }]);
+        const assistantMessage: Message = { role: "assistant", content: aiContent, timestamp: new Date() };
+        setMessages((prev) => [...prev, assistantMessage]);
       }
       setStreamedContent("");
     } catch (err: any) {
@@ -200,13 +264,25 @@ The final post should be polished and require little to no editing before publis
             <Sparkles className="w-6 h-6 text-primary animate-pulse" />
             AI Writing Assistant
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-500 hover:text-red-600 focus:outline-none transition-colors"
-            aria-label="Close"
-          >
-            <X className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-2">
+            {messages.length > 0 && (
+              <button
+                onClick={clearChat}
+                className="p-2 text-gray-500 hover:text-red-600 focus:outline-none transition-colors"
+                title="Clear chat history"
+                aria-label="Clear chat"
+              >
+                <Trash2 className="w-5 h-5" />
+              </button>
+            )}
+            <button
+              onClick={onClose}
+              className="text-gray-500 hover:text-red-600 focus:outline-none transition-colors"
+              aria-label="Close"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
         </div>
         
         {/* Model Selection UI */}
@@ -266,33 +342,48 @@ The final post should be polished and require little to no editing before publis
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-muted/40">
           {messages.length === 0 && !streamedContent && (
-            <div className="text-center text-muted-foreground text-sm">Start a conversation with your AI assistant.</div>
+            <div className="text-center text-muted-foreground text-sm">
+              <div className="mb-2">Start a conversation with your AI assistant.</div>
+              <div className="text-xs">💡 The AI will remember our conversation and can iterate on previous responses.</div>
+            </div>
           )}
+          
+          {messages.length > 0 && (
+            <div className="text-center text-xs text-muted-foreground mb-4 p-2 bg-primary/5 rounded-lg border border-primary/20">
+              <span>🧠 Memory Active: AI remembers {messages.length} previous messages</span>
+              <div className="mt-1 text-xs opacity-75">
+                💾 Chat history is automatically saved • You can ask for improvements, changes, or iterations on previous responses
+              </div>
+            </div>
+          )}
+          
           {/* AI/Chat messages */}
-          <>
-            {messages.map((msg, idx) => {
-              return (
-                <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`relative rounded-xl px-4 py-2 max-w-[80%] whitespace-pre-line break-words ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-border"}`}>
-                    {msg.role === "assistant" ? (
-                      <>
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
-                        <button
-                          className="absolute bottom-0 -right-2 p-1 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all duration-200 hover:scale-110"
-                          title="Insert this response into the blog editor"
-                          onClick={() => handleInsert(msg.content)}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </button>
-                      </>
-                    ) : (
-                      msg.content
-                    )}
+          {messages.map((msg, idx) => {
+            return (
+              <div key={idx} className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
+                <div className={`relative rounded-xl px-4 py-2 max-w-[80%] whitespace-pre-line break-words ${msg.role === "user" ? "bg-primary text-primary-foreground" : "bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-border"}`}>
+                  {msg.role === "assistant" ? (
+                    <>
+                      <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.content}</ReactMarkdown>
+                      <button
+                        className="absolute bottom-0 -right-2 p-1 rounded-full bg-primary text-primary-foreground shadow-lg hover:bg-primary/90 transition-all duration-200 hover:scale-110"
+                        title="Insert this response into the blog editor"
+                        onClick={() => handleInsert(msg.content)}
+                      >
+                        <Plus className="w-4 h-4" />
+                      </button>
+                    </>
+                  ) : (
+                    msg.content
+                  )}
+                  <div className="text-xs text-muted-foreground mt-2 opacity-60">
+                    {msg.timestamp.toLocaleTimeString()}
                   </div>
                 </div>
-              );
-            })}
-          </>
+              </div>
+            );
+          })}
+          
           {loading && !streamedContent && (
             <div className="flex justify-start">
                 <div className="rounded-xl px-4 py-2 bg-white dark:bg-zinc-800 border border-border">
@@ -304,6 +395,7 @@ The final post should be polished and require little to no editing before publis
                 </div>
             </div>
           )}
+          
           {streamedContent && (
             <div className="flex justify-start">
               <div className="rounded-xl px-4 py-2 max-w-[80%] bg-white dark:bg-zinc-800 text-gray-900 dark:text-gray-100 border border-border animate-pulse break-words">
@@ -311,9 +403,12 @@ The final post should be polished and require little to no editing before publis
               </div>
             </div>
           )}
+          
           <div ref={chatEndRef} />
         </div>
+        
         {error && <div className="text-red-600 px-6 pb-2 text-sm">{error}</div>}
+        
         <div className="px-6 pt-2 pb-0 text-xs text-muted-foreground">
           <span>AI will generate a ready-to-post Markdown blog article.</span>
           <span className="ml-2 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
@@ -321,8 +416,12 @@ The final post should be polished and require little to no editing before publis
           </span>
           <div className="mt-1 text-xs text-muted-foreground">
             <span>💡 Tip: Use Ctrl+1-4 to quickly switch models</span>
+            {messages.length > 0 && (
+              <span className="ml-2">• Memory: {messages.length} messages</span>
+            )}
           </div>
         </div>
+        
         <form
           className="flex items-center gap-2 px-6 py-4 border-t border-border bg-background"
           onSubmit={e => { e.preventDefault(); if (!loading) handleSend(); }}
@@ -331,7 +430,7 @@ The final post should be polished and require little to no editing before publis
             ref={textareaRef}
             className="flex-1 rounded border border-border p-2 resize-none min-h-[100px] max-h-[100px] text-base px-4 py-3 bg-white dark:bg-zinc-900 shadow-inner focus:outline-none focus:ring-2 focus:ring-primary/30 transition placeholder:text-gray-400 dark:placeholder:text-gray-400"
             rows={4}
-            placeholder="Type your message..."
+            placeholder="Type your message... (AI remembers our conversation)"
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -361,4 +460,4 @@ The final post should be polished and require little to no editing before publis
       </div>
     </div>
   );
-} 
+}

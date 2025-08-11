@@ -20,13 +20,15 @@ You are a helpful AI writing assistant for a personal blog, chatting with the bl
 - Never refer to yourself as an AI or mention the writing process.
 - When writing a blog post, use proper formattings, styles, headings etc... and keep it engaging, fun easy to read and eye-catching, Depending on the topic of the blog you can be more creative, funny, cozy, modern, shakespear, serious, professional etc...
 - Always use eye-catching titles for the blogs.
+- IMPORTANT: You have memory of the conversation. Use the conversation history to understand context, iterate on previous responses, and avoid asking for information that was already provided.
+- If the user wants you to improve, fix, or iterate on something you previously wrote, use that context to make the changes.
 `;
 
 export const runtime = "edge";
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, model: requestedModel = "gpt-4o", stream = false } = await req.json();
+    const { prompt, model: requestedModel = "gpt-4o", stream = false, conversationHistory = [] } = await req.json();
     const token = process.env["GITHUB_TOKEN"];
     if (!token) {
       return new Response(JSON.stringify({ error: "GitHub API token not set." }), { status: 500 });
@@ -42,14 +44,22 @@ export async function POST(req: NextRequest) {
 
     const client = new OpenAI({ baseURL: endpoint, apiKey: token });
     console.log(`[AI API] Sending request to GitHub AI with model: ${requestedModel} (${model})...`);
+    console.log(`[AI API] Conversation history: ${conversationHistory.length} messages`);
+    console.log(`[AI API] Full conversation history:`, JSON.stringify(conversationHistory, null, 2));
+    
+    // Build messages array with conversation history
+    const messages = [
+      { role: "system", content: systemPrompt },
+      ...conversationHistory,
+      { role: "user", content: prompt }
+    ];
+    
+    console.log(`[AI API] Final messages array:`, JSON.stringify(messages, null, 2));
     
     if (stream) {
       // Handle streaming response
       const response = await client.chat.completions.create({
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: prompt }
-        ],
+        messages: messages,
         model: model,
         stream: true
       });
@@ -83,10 +93,7 @@ export async function POST(req: NextRequest) {
     } else {
       // Handle non-streaming response
       const response = await client.chat.completions.create({
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: prompt }
-        ],
+        messages: messages,
         model: model
       });
 
