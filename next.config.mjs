@@ -57,7 +57,7 @@ const nextConfig = {
       { protocol: "https", hostname: "static.canva.com", pathname: "/**" }, // Canva
       // { protocol: "https", hostname: "drscdn.500px.org", pathname: "/**" }, // 500px
       // { protocol: "https", hostname: "images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com", pathname: "/**" }, // DeviantArt
-      { protocol: "https", hostname: "tdawmqlwnaxthhncuhee.supabase.co", pathname: "/storage/v1/object/public/blog-attachments/**" }, // Your Supabase storage
+      { protocol: "https", hostname: "spjjtcinztowzplygvex.supabase.co", pathname: "/storage/v1/object/public/blog-attachments/**" }, // Supabase storage
       { protocol: "https", hostname: "videos.openai.com", pathname: "/**" }, // OpenAI
       { protocol: "https", hostname: "media.istockphoto.com", pathname: "/**" }, // Istock
       { protocol: "https", hostname: "opengraph.githubassets.com", pathname: "/**" }, // GitHub Open Graph images
