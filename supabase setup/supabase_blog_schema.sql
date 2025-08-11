@@ -17,6 +17,7 @@ create table if not exists blogposts (
 -- Comments table
 create table if not exists comments (
   id uuid primary key default uuid_generate_v4(),
+  name text not null,
   post_id uuid references blogposts(id) on delete cascade,
   user_id uuid references auth.users(id),
   parent_id uuid references comments(id) on delete cascade,

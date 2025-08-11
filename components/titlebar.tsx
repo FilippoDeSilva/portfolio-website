@@ -5,13 +5,11 @@ import { useTheme } from "next-themes";
 import { Menu, User, X } from "lucide-react";
 import { useUserLocationInfo } from "@/components/userLocationInfo";
 import { usePathname, useRouter } from "next/navigation";
-import { Button } from "./ui/button";
 import { AnimatePresence, motion } from "framer-motion";
-import { Sheet, SheetContent, SheetTrigger, SheetClose, SheetOverlay } from "@/components/ui/sheet";
 import { useIsMobile } from "@/components/ui/use-mobile";
 
 const NAV_ITEMS = [
-  { id: "home", label: "Home", href: "/" },
+  { id: "home", label: "Home", href: "/#" },
   { id: "about", label: "About", href: "/#about" },
   { id: "skills", label: "Skills", href: "/#skills" },
   { id: "projects", label: "Projects", href: "/#projects" },
@@ -143,6 +141,7 @@ export default function TitleBar({ title, children }: { title: string; children?
               </svg>
             )}
           </button>
+          
           {/* Hamburger Button */}
           <button
             aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
@@ -161,6 +160,7 @@ export default function TitleBar({ title, children }: { title: string; children?
           {children}
         </div>
       </div>
+
       {/* Mobile Menu Overlay */}
       <AnimatePresence>
         {isMobileMenuOpen && (
