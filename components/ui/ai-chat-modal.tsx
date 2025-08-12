@@ -35,6 +35,8 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
   const [chats, setChats] = useState<Chat[]>([]);
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
+  const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -177,6 +179,32 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
     setMessages([]);
     setError(null);
     setStreamedContent("");
+  };
+
+  // Start editing a chat title
+  const startEditTitle = (chat: Chat) => {
+    setEditingTitleId(chat.id);
+    setEditingTitle(chat.title || "");
+  };
+
+  // Save the edited title
+  const saveTitle = () => {
+    if (!editingTitleId || !editingTitle.trim()) return;
+    
+    setChats(prev => prev.map(chat => 
+      chat.id === editingTitleId 
+        ? { ...chat, title: editingTitle.trim() }
+        : chat
+    ));
+    
+    setEditingTitleId(null);
+    setEditingTitle("");
+  };
+
+  // Cancel title editing
+  const cancelEditTitle = () => {
+    setEditingTitleId(null);
+    setEditingTitle("");
   };
 
   // Clear current chat messages
@@ -391,7 +419,12 @@ The final post should be polished and require little to no editing before publis
         {showHistory && (
           <div className="absolute right-3 top-16 bottom-3 w-72 bg-white dark:bg-zinc-800 border border-border rounded-lg shadow-xl z-50 overflow-hidden flex flex-col">
             <div className="px-4 py-3 border-b border-border flex items-center justify-between">
-              <span className="text-sm font-semibold">Chat History</span>
+              <div>
+                <span className="text-sm font-semibold">Chat History</span>
+                <div className="text-xs text-muted-foreground mt-1">
+                  💾 Local storage • Not synced across devices
+                </div>
+              </div>
               <button
                 onClick={() => setShowHistory(false)}
                 className="text-gray-500 hover:text-red-600"
@@ -417,37 +450,86 @@ The final post should be polished and require little to no editing before publis
                           }}
                           title={chat.title}
                         >
-                          <div className="font-medium text-sm line-clamp-2">{chat.title || 'New Chat'}</div>
-                          <div className="text-xs text-muted-foreground mt-1">
-                            {new Date(chat.updatedAt || chat.createdAt).toLocaleString()} • {chat.messages?.length || 0} msg
-                          </div>
+                          {editingTitleId === chat.id ? (
+                            <div className="space-y-2">
+                              <input
+                                type="text"
+                                value={editingTitle}
+                                onChange={(e) => setEditingTitle(e.target.value)}
+                                className="w-full px-2 py-1 text-sm border border-border rounded bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-primary/30"
+                                autoFocus
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') saveTitle();
+                                  if (e.key === 'Escape') cancelEditTitle();
+                                }}
+                              />
+                              <div className="flex gap-1">
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); saveTitle(); }}
+                                  className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
+                                >
+                                  Save
+                                </button>
+                                <button
+                                  onClick={(e) => { e.stopPropagation(); cancelEditTitle(); }}
+                                  className="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              <div className="font-medium text-sm line-clamp-2">{chat.title || 'New Chat'}</div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                {new Date(chat.updatedAt || chat.createdAt).toLocaleString()} • {chat.messages?.length || 0} msg
+                              </div>
+                            </>
+                          )}
                         </button>
-                        <button
-                          className="p-1 text-gray-500 hover:text-red-600"
-                          title="Delete chat"
-                          aria-label="Delete chat"
-                          onClick={() => {
-                            setChats(prev => prev.filter(c => c.id !== chat.id));
-                            if (activeChatId === chat.id) {
-                              // If deleting active, switch to first remaining or start new
-                              setTimeout(() => {
-                                if (chats.length > 1) {
-                                  const next = chats.find(c => c.id !== chat.id);
-                                  if (next) {
-                                    setActiveChatId(next.id);
-                                    setMessages(next.messages || []);
+                        <div className="flex gap-1">
+                          {editingTitleId !== chat.id && (
+                            <button
+                              className="p-1 text-gray-500 hover:text-blue-600"
+                              title="Rename chat"
+                              aria-label="Rename chat"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                startEditTitle(chat);
+                              }}
+                            >
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 1 1 2.828 2.828L11.828 15.828a2 2 0 0 1-2.828 0L9 13zm-2 6h6"/>
+                              </svg>
+                            </button>
+                          )}
+                          <button
+                            className="p-1 text-gray-500 hover:text-red-600"
+                            title="Delete chat"
+                            aria-label="Delete chat"
+                            onClick={() => {
+                              setChats(prev => prev.filter(c => c.id !== chat.id));
+                              if (activeChatId === chat.id) {
+                                // If deleting active, switch to first remaining or start new
+                                setTimeout(() => {
+                                  if (chats.length > 1) {
+                                    const next = chats.find(c => c.id !== chat.id);
+                                    if (next) {
+                                      setActiveChatId(next.id);
+                                      setMessages(next.messages || []);
+                                    } else {
+                                      startNewChat();
+                                    }
                                   } else {
                                     startNewChat();
                                   }
-                                } else {
-                                  startNewChat();
-                                }
-                              }, 0);
-                            }
-                          }}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                                }, 0);
+                              }
+                            }}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
                     </li>
                   ))}
