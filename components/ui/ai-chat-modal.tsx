@@ -1,8 +1,9 @@
 import { useState, useRef, useEffect } from "react";
-import { Sparkles, X, Send as Telegram, StopCircle, Plus, ChevronDown, Trash2 } from "lucide-react";
+import { Sparkles, X, Send as Telegram, StopCircle, Plus, ChevronDown, Trash2, History } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { marked } from "marked";
+import { v4 as uuidv4 } from "uuid";
 
 interface Message {
   role: "user" | "assistant";
@@ -10,8 +11,17 @@ interface Message {
   timestamp: Date;
 }
 
-// Local storage key for chat history
-const CHAT_HISTORY_KEY = "ai-chat-history";
+interface Chat {
+  id: string;
+  title: string;
+  messages: Message[];
+  createdAt: string; // ISO string
+  updatedAt: string; // ISO string
+}
+
+// Local storage keys
+const CHAT_HISTORY_KEY = "ai-chat-history"; // legacy single-thread key
+const CHAT_CONVERSATIONS_KEY = "ai-chat-conversations"; // new multi-chat key
 
 export default function AIChatModal({ open, onClose, onInsert }: { open: boolean; onClose: () => void; onInsert: (text: string) => void }) {
   const [input, setInput] = useState("");
@@ -22,6 +32,9 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
   const [streamedContent, setStreamedContent] = useState("");
   const [selectedModel, setSelectedModel] = useState("gpt-4o");
   const [showModelDropdown, setShowModelDropdown] = useState(false);
+  const [chats, setChats] = useState<Chat[]>([]);
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -34,36 +47,94 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
     { id: "gpt-3.5-turbo", name: "GPT-3.5 Turbo", description: "Fastest & most affordable" }
   ];
 
-  // Load chat history from localStorage on component mount
+  function deriveTitleFromMessages(msgs: Message[]): string {
+    const firstUser = msgs.find(m => m.role === 'user');
+    if (!firstUser) return "New Chat";
+    const text = firstUser.content.replace(/\s+/g, ' ').trim();
+    if (text.length <= 50) return text || "New Chat";
+    return text.slice(0, 50) + '…';
+  }
+
+  // Load chats (and migrate legacy single-thread history if present)
   useEffect(() => {
     try {
-      const savedHistory = localStorage.getItem(CHAT_HISTORY_KEY);
-      if (savedHistory) {
-        const parsedHistory = JSON.parse(savedHistory);
-        // Convert timestamp strings back to Date objects
-        const messagesWithDates = parsedHistory.map((msg: any) => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
+      const saved = localStorage.getItem(CHAT_CONVERSATIONS_KEY);
+      if (saved) {
+        const parsed: any[] = JSON.parse(saved);
+        const normalized: Chat[] = parsed.map((c: any) => ({
+          ...c,
+          messages: (c.messages || []).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })),
         }));
-        setMessages(messagesWithDates);
-        console.log('📱 [Memory] Loaded chat history from localStorage:', messagesWithDates.length, 'messages');
+        setChats(normalized);
+        if (normalized.length > 0) {
+          setActiveChatId(normalized[0].id);
+          setMessages(normalized[0].messages || []);
+        }
+        return;
+      }
+      // Legacy migration
+      const legacy = localStorage.getItem(CHAT_HISTORY_KEY);
+      if (legacy) {
+        const legacyMsgs = JSON.parse(legacy).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+        const chat: Chat = {
+          id: uuidv4(),
+          title: deriveTitleFromMessages(legacyMsgs),
+          messages: legacyMsgs,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        const list = [chat];
+        localStorage.setItem(CHAT_CONVERSATIONS_KEY, JSON.stringify(list));
+        localStorage.removeItem(CHAT_HISTORY_KEY);
+        setChats(list);
+        setActiveChatId(chat.id);
+        setMessages(chat.messages);
+      } else {
+        // Initialize with a fresh chat
+        const chat: Chat = {
+          id: uuidv4(),
+          title: "New Chat",
+          messages: [],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+        setChats([chat]);
+        setActiveChatId(chat.id);
+        setMessages([]);
+        localStorage.setItem(CHAT_CONVERSATIONS_KEY, JSON.stringify([chat]));
       }
     } catch (error) {
-      console.error('❌ [Memory] Failed to load chat history:', error);
+      console.error('❌ [Memory] Failed to load chats:', error);
     }
   }, []);
 
-  // Save chat history to localStorage whenever messages change
+  // Persist chats whenever they change
   useEffect(() => {
-    if (messages.length > 0) {
-      try {
-        localStorage.setItem(CHAT_HISTORY_KEY, JSON.stringify(messages));
-        console.log('💾 [Memory] Saved chat history to localStorage:', messages.length, 'messages');
-      } catch (error) {
-        console.error('❌ [Memory] Failed to save chat history:', error);
-      }
+    try {
+      localStorage.setItem(CHAT_CONVERSATIONS_KEY, JSON.stringify(chats));
+    } catch (error) {
+      console.error('❌ [Memory] Failed to save chats:', error);
     }
-  }, [messages]);
+  }, [chats]);
+
+  // Sync messages into the active chat
+  useEffect(() => {
+    if (!activeChatId) return;
+    setChats(prev => {
+      const idx = prev.findIndex(c => c.id === activeChatId);
+      if (idx === -1) return prev;
+      const updated = [...prev];
+      const current = updated[idx];
+      const newTitle = current.title && current.title !== 'New Chat' ? current.title : deriveTitleFromMessages(messages);
+      updated[idx] = {
+        ...current,
+        title: newTitle,
+        messages: messages,
+        updatedAt: new Date().toISOString(),
+      };
+      return updated;
+    });
+  }, [messages, activeChatId]);
 
   useEffect(() => {
     if (open) {
@@ -92,18 +163,33 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [showModelDropdown]);
 
-  // Clear chat history
+  // Start a new chat
+  const startNewChat = () => {
+    const newChat: Chat = {
+      id: uuidv4(),
+      title: "New Chat",
+      messages: [],
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    };
+    setChats(prev => [newChat, ...prev]);
+    setActiveChatId(newChat.id);
+    setMessages([]);
+    setError(null);
+    setStreamedContent("");
+  };
+
+  // Clear current chat messages
   const clearChat = () => {
     setMessages([]);
     setError(null);
     setStreamedContent("");
-    // Also clear from localStorage
-    localStorage.removeItem(CHAT_HISTORY_KEY);
-    console.log('🗑️ [Memory] Cleared chat history from localStorage');
   };
 
   async function handleSend() {
     if (!input.trim()) return;
+
+    if (!activeChatId) startNewChat();
 
     const userMessage: Message = { role: "user", content: input, timestamp: new Date() };
     setMessages((prev) => [...prev, userMessage]);
@@ -265,11 +351,27 @@ The final post should be polished and require little to no editing before publis
             AI Writing Assistant
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowHistory(v => !v)}
+              className="p-2 text-gray-500 hover:text-primary focus:outline-none transition-colors"
+              title="Chat history"
+              aria-label="Chat history"
+            >
+              <History className="w-5 h-5" />
+            </button>
+            <button
+              onClick={startNewChat}
+              className="p-2 text-gray-500 hover:text-green-600 focus:outline-none transition-colors"
+              title="New chat"
+              aria-label="New chat"
+            >
+              <Plus className="w-5 h-5" />
+            </button>
             {messages.length > 0 && (
               <button
                 onClick={clearChat}
                 className="p-2 text-gray-500 hover:text-red-600 focus:outline-none transition-colors"
-                title="Clear chat history"
+                title="Clear current chat"
                 aria-label="Clear chat"
               >
                 <Trash2 className="w-5 h-5" />
@@ -284,6 +386,84 @@ The final post should be polished and require little to no editing before publis
             </button>
           </div>
         </div>
+        
+        {/* History panel */}
+        {showHistory && (
+          <div className="absolute right-3 top-16 bottom-3 w-72 bg-white dark:bg-zinc-800 border border-border rounded-lg shadow-xl z-50 overflow-hidden flex flex-col">
+            <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+              <span className="text-sm font-semibold">Chat History</span>
+              <button
+                onClick={() => setShowHistory(false)}
+                className="text-gray-500 hover:text-red-600"
+                aria-label="Close history"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {chats.length === 0 ? (
+                <div className="p-4 text-sm text-muted-foreground">No chats yet.</div>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {chats.map(chat => (
+                    <li key={chat.id} className={`p-3 hover:bg-muted/40 cursor-pointer ${activeChatId === chat.id ? 'bg-primary/5' : ''}`}>
+                      <div className="flex items-start gap-2">
+                        <button
+                          className="flex-1 text-left"
+                          onClick={() => {
+                            setActiveChatId(chat.id);
+                            setMessages(chat.messages || []);
+                            setShowHistory(false);
+                          }}
+                          title={chat.title}
+                        >
+                          <div className="font-medium text-sm line-clamp-2">{chat.title || 'New Chat'}</div>
+                          <div className="text-xs text-muted-foreground mt-1">
+                            {new Date(chat.updatedAt || chat.createdAt).toLocaleString()} • {chat.messages?.length || 0} msg
+                          </div>
+                        </button>
+                        <button
+                          className="p-1 text-gray-500 hover:text-red-600"
+                          title="Delete chat"
+                          aria-label="Delete chat"
+                          onClick={() => {
+                            setChats(prev => prev.filter(c => c.id !== chat.id));
+                            if (activeChatId === chat.id) {
+                              // If deleting active, switch to first remaining or start new
+                              setTimeout(() => {
+                                if (chats.length > 1) {
+                                  const next = chats.find(c => c.id !== chat.id);
+                                  if (next) {
+                                    setActiveChatId(next.id);
+                                    setMessages(next.messages || []);
+                                  } else {
+                                    startNewChat();
+                                  }
+                                } else {
+                                  startNewChat();
+                                }
+                              }, 0);
+                            }
+                          }}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <div className="p-3 border-t border-border">
+              <button
+                onClick={startNewChat}
+                className="w-full px-3 py-2 bg-primary text-primary-foreground rounded text-sm hover:bg-primary/90"
+              >
+                New Chat
+              </button>
+            </div>
+          </div>
+        )}
         
         {/* Model Selection UI */}
         <div className="px-6 py-3 border-b border-border bg-muted/20">
@@ -343,8 +523,7 @@ The final post should be polished and require little to no editing before publis
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4 bg-muted/40">
           {messages.length === 0 && !streamedContent && (
             <div className="text-center text-muted-foreground text-sm">
-              <div className="mb-2">Start a conversation with your AI assistant.</div>
-              <div className="text-xs">💡 The AI will remember our conversation and can iterate on previous responses.</div>
+              <div className="mb-2">💡Tip: Use Ctrl+1-4 to quickly switch models</div>
             </div>
           )}
           
@@ -409,18 +588,7 @@ The final post should be polished and require little to no editing before publis
         
         {error && <div className="text-red-600 px-6 pb-2 text-sm">{error}</div>}
         
-        <div className="px-6 pt-2 pb-0 text-xs text-muted-foreground">
-          <span>AI will generate a ready-to-post Markdown blog article.</span>
-          <span className="ml-2 px-2 py-1 bg-primary/10 text-primary rounded-full text-xs">
-            Using {availableModels.find(m => m.id === selectedModel)?.name}
-          </span>
-          <div className="mt-1 text-xs text-muted-foreground">
-            <span>💡 Tip: Use Ctrl+1-4 to quickly switch models</span>
-            {messages.length > 0 && (
-              <span className="ml-2">• Memory: {messages.length} messages</span>
-            )}
-          </div>
-        </div>
+        <div className="px-6 pt-2 pb-0 text-xs text-muted-foreground"></div>
         
         <form
           className="flex items-center gap-2 px-6 py-4 border-t border-border bg-background"
@@ -428,14 +596,14 @@ The final post should be polished and require little to no editing before publis
         >
           <textarea
             ref={textareaRef}
-            className="flex-1 rounded border border-border p-2 resize-none min-h-[100px] max-h-[100px] text-base px-4 py-3 bg-white dark:bg-zinc-900 shadow-inner focus:outline-none focus:ring-2 focus:ring-primary/30 transition placeholder:text-gray-400 dark:placeholder:text-gray-400"
+            className="flex-1 rounded border border-border p-2 resize-none min-h-[80px] max-h-[100px] text-base px-4 py-3 bg-white dark:bg-zinc-900 shadow-inner focus:outline-none focus:ring-2 focus:ring-primary/30 transition placeholder:text-gray-400 dark:placeholder:text-gray-400"
             rows={4}
-            placeholder="Type your message... (AI remembers our conversation)"
+            placeholder="Type your message..."
             value={input}
             onChange={e => setInput(e.target.value)}
             onKeyDown={handleKeyDown}
             disabled={loading}
-            style={{ height: '120px', overflow: 'auto' }}
+            style={{ height: '80px', overflow: 'auto' }}
           />
           {streaming ? (
             <button
