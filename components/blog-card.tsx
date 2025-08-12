@@ -7,7 +7,6 @@ import MediaModal from "./ui/media-modal";
 export type BlogPost = {
   id: string;
   title: string;
-  excerpt: string;
   cover_image?: string;
   media_url?: string;
   media_type?: string;
@@ -33,6 +32,25 @@ export function BlogCard({
 }) {
   const [modalOpen, setModalOpen] = React.useState(false);
   const [modalFile, setModalFile] = React.useState<any>(null);
+
+  // Function to extract text preview from HTML content
+  const getContentPreview = (htmlContent: string, maxWords: number = 20) => {
+    if (!htmlContent) return "";
+    
+    // Remove HTML tags and decode HTML entities
+    const tempDiv = document.createElement('div');
+    tempDiv.innerHTML = htmlContent;
+    let text = tempDiv.textContent || tempDiv.innerText || "";
+    
+    // Clean up extra whitespace
+    text = text.replace(/\s+/g, ' ').trim();
+    
+    // Get first N words
+    const words = text.split(' ');
+    if (words.length <= maxWords) return text;
+    
+    return words.slice(0, maxWords).join(' ') + '...';
+  };
 
   return (
     <div
@@ -182,9 +200,11 @@ export function BlogCard({
           <h3 className="text-2xl font-bold line-clamp-2 text-primary dark:text-primary break-words">
             {post.title}
           </h3>
-          <p className="text-muted-foreground mb-2 line-clamp-3">
-            {post.excerpt}
-          </p>
+          {post.content && (
+            <p className="text-muted-foreground mb-2 line-clamp-3">
+              {getContentPreview(post.content, 25)}
+            </p>
+          )}
           {!previewOnly && post.content && (
             <div
               className="prose prose-neutral max-w-none mb-4"

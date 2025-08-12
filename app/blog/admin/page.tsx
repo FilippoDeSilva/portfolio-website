@@ -146,14 +146,12 @@ export default function BlogAdmin() {
   const [posts, setPosts] = useState<any[]>([]);
   const [form, setForm] = useState<{
     title: string;
-    excerpt: string;
     cover_image: string;
     media_url: string | undefined;
     media_type: string | undefined;
     attachments: any[];
   }>({
     title: "",
-    excerpt: "",
     cover_image: "",
     media_url: undefined,
     media_type: undefined,
@@ -325,7 +323,7 @@ export default function BlogAdmin() {
     } else {
       await supabase.from("blogposts").insert([postData]);
     }
-    setForm({ title: "", excerpt: "", cover_image: "", media_url: undefined, media_type: undefined, attachments: [] });
+    setForm({ title: "", cover_image: "", media_url: undefined, media_type: undefined, attachments: [] });
     setContent("");
     setCoverImageFile(null);
     setCoverImageUrlInput("");
@@ -337,7 +335,6 @@ export default function BlogAdmin() {
   async function handleEdit(post: any) {
     setForm({
       title: post.title,
-      excerpt: post.excerpt,
       cover_image: post.cover_image || "",
       media_url: post.media_url || undefined,
       media_type: post.media_type || undefined,
@@ -489,18 +486,7 @@ export default function BlogAdmin() {
                         placeholder="Enter a captivating title..."
                     />
                   </div>
-                  <div>
-                      <label htmlFor="excerpt" className="block text-sm font-medium text-muted-foreground mb-1">Excerpt</label>
-                    <textarea
-                      name="excerpt"
-                      id="excerpt"
-                      value={form.excerpt}
-                      onChange={(e) => setForm({ ...form, excerpt: e.target.value })}
-                      rows={2}
-                        className="w-full rounded-lg border border-border bg-background px-4 py-2 text-base shadow-inner focus:outline-none focus:ring-2 focus:ring-primary/30 transition"
-                        placeholder="A short summary or teaser..."
-                    />
-                  </div>
+                  {/* Excerpt removed from UI as requested */}
                   <div>
                       <label htmlFor="cover_image" className="block text-sm font-medium text-muted-foreground mb-1">Cover Image</label>
                       <div className="flex flex-col sm:flex-row gap-2 mt-1">
@@ -572,7 +558,17 @@ export default function BlogAdmin() {
                         aria-label="Add Attachment"
                         onClick={() => {
                           if (attachmentUrlInput) {
-                            setForm(f => ({ ...f, attachments: [...(f.attachments || []), { url: attachmentUrlInput, name: attachmentUrlInput, type: 'attachment', ext: attachmentUrlInput.split('.').pop() }] }));
+                            const url = attachmentUrlInput.trim();
+                            const withoutQuery = url.split('?')[0].toLowerCase();
+                            const ext = withoutQuery.includes('.') ? withoutQuery.split('.').pop() || '' : '';
+                            let type: string = 'attachment';
+                            if (ext === 'pdf') type = 'application/pdf';
+                            else if (['jpg','jpeg','png','gif','webp','svg','bmp','avif'].includes(ext)) type = `image/${ext}`;
+                            else if (['mp4','webm','ogg','mov','mkv'].includes(ext)) type = `video/${ext}`;
+                            else if (['mp3','wav','m4a','aac','flac','ogg'].includes(ext)) type = `audio/${ext}`;
+                            else if (['zip','rar','7z','tar','gz','bz2','xz'].includes(ext)) type = 'archive';
+                            else if (/^https?:\/\//i.test(url)) type = 'link';
+                            setForm(f => ({ ...f, attachments: [...(f.attachments || []), { url, name: url, type, ext }] }));
                             setAttachmentUrlInput("");
                           }
                         }}
@@ -613,7 +609,7 @@ export default function BlogAdmin() {
                         variant="outline"
                         onClick={() => {
                           setEditingId(null);
-                          setForm({ title: "", excerpt: "", cover_image: "", media_url: undefined, media_type: undefined, attachments: [] });
+                          setForm({ title: "", cover_image: "", media_url: undefined, media_type: undefined, attachments: [] });
                           setContent("");
                           setCoverImageFile(null);
                           setCoverImageUrlInput("");
@@ -631,7 +627,7 @@ export default function BlogAdmin() {
                         variant="outline"
                         onClick={() => {
                           setEditingId(null);
-                          setForm({ title: "", excerpt: "", cover_image: "", media_url: undefined, media_type: undefined, attachments: [] });
+                          setForm({ title: "", cover_image: "", media_url: undefined, media_type: undefined, attachments: [] });
                           setContent("");
                           setCoverImageFile(null);
                           setCoverImageUrlInput("");

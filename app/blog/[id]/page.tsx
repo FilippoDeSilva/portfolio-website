@@ -22,7 +22,7 @@ export default function BlogDetailPage() {
     async function fetchPost() {
       const { data, error } = await supabase
         .from("blogposts")
-        .select("id, title, excerpt, content, cover_image, media_url, media_type, created_at, likes, love, laugh, attachments, view_count")
+        .select("id, title, content, cover_image, media_url, media_type, created_at, likes, love, laugh, attachments, view_count")
         .eq("id", id)
         .single();
       if (error) {
@@ -66,8 +66,6 @@ export default function BlogDetailPage() {
           <div className="p-6 flex flex-col gap-6">
             {/* Title Skeleton */}
             <div className="h-10 w-2/3 bg-muted/40 rounded mb-4 animate-pulse" />
-            {/* Excerpt Skeleton */}
-            <div className="h-5 w-1/2 bg-muted/30 rounded mb-6 animate-pulse" />
             {/* Content Skeleton */}
             <div className="prose dark:prose-invert max-w-none text-lg leading-relaxed bg-white/80 dark:bg-zinc-900/70 rounded-xl p-6 shadow-inner border border-border">
               <div className="h-4 w-full bg-muted/20 rounded mb-2 animate-pulse" />
@@ -150,9 +148,6 @@ return (
               <h1 className="text-primary dark:text-primary text-4xl font-extrabold leading-tight mb-2 drop-shadow-sm">
                 {post.title}
               </h1>
-              <div className="flex items-center gap-4 mb-2">
-                {post.excerpt && <p className="text-lg text-muted-foreground font-medium m-0">{post.excerpt}</p>}
-              </div>
               {post.content && (
                 <div className="prose dark:prose-invert max-w-none text-lg leading-relaxed bg-white/80 dark:bg-zinc-900/70 rounded-xl p-6 shadow-inner border border-border">
                   <div dangerouslySetInnerHTML={{ __html: post.content }} />
@@ -164,46 +159,135 @@ return (
               <div className="flex flex-wrap gap-4">
                 {post.attachments.map((att: any, idx: number) => {
                   if (!att?.url) return null;
-                  if (att.type?.startsWith("image")) {
+
+                  const type: string = att.type || "";
+                  const url: string = att.url;
+                  const derivedExt = (() => {
+                    try {
+                      const withoutQuery = url.split("?")[0];
+                      const parts = withoutQuery.split(".");
+                      return parts.length > 1 ? parts.pop()?.toLowerCase() : undefined;
+                    } catch {
+                      return undefined;
+                    }
+                  })();
+                  const ext: string | undefined = (att.ext || derivedExt || "").toLowerCase();
+
+                  const isImage = type.startsWith("image");
+                  const isVideo = type.startsWith("video");
+                  const isAudio = type.startsWith("audio");
+                  const isPdf = type === "application/pdf" || ext === "pdf";
+                  const isArchive = ["zip", "rar", "7z", "tar", "gz", "bz2", "xz"].includes(ext || "");
+                  const isLink = type === "link" || (!type && /^https?:\/\//i.test(url) && !isImage && !isVideo && !isAudio && !isPdf);
+
+                  if (isImage) {
                     return (
                       <img
                         key={idx}
-                        src={att.url}
+                        src={url}
                         alt={att.name || `attachment-${idx}`}
                         className="rounded-lg max-h-48 max-w-xs object-cover border"
                       />
                     );
                   }
-                  if (att.type?.startsWith("video")) {
+
+                  if (isVideo) {
                     return (
                       <video
                         key={idx}
-                        src={att.url}
+                        src={url}
                         controls
                         className="rounded-lg max-h-48 max-w-xs border"
                       />
                     );
                   }
-                  if (att.type?.startsWith("audio")) {
+
+                  if (isAudio) {
                     return (
-                      <audio
-                        key={idx}
-                        src={att.url}
-                        controls
-                        className="w-full"
-                      />
+                      <audio key={idx} src={url} controls className="w-full max-w-xs border rounded-lg" />
                     );
                   }
-                  // fallback for other types (e.g. PDF)
+
+                  if (isPdf) {
+                    return (
+                      <a
+                        key={idx}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 border rounded-lg p-3 bg-muted/30 hover:bg-muted/40 transition w-64"
+                        title={att.name || url}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-red-500">
+                          <path d="M19.5 2.25h-15A2.25 2.25 0 002.25 4.5v15A2.25 2.25 0 004.5 21.75h15a2.25 2.25 0 002.25-2.25v-15A2.25 2.25 0 0019.5 2.25zM9 8.25h6v1.5H9v-1.5zm0 3h6v1.5H9v-1.5zM9 14.25h6v1.5H9v-1.5z"/>
+                        </svg>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{att.name || "View PDF"}</div>
+                          <div className="text-xs text-muted-foreground truncate">PDF document</div>
+                        </div>
+                      </a>
+                    );
+                  }
+
+                  if (isArchive) {
+                    return (
+                      <a
+                        key={idx}
+                        href={url}
+                        download
+                        className="flex items-center gap-3 border rounded-lg p-3 bg-muted/30 hover:bg-muted/40 transition w-64"
+                        title={att.name || url}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-amber-600">
+                          <path d="M6 2.25h12A1.75 1.75 0 0119.75 4v16A1.75 1.75 0 0118 21.75H6A1.75 1.75 0 014.25 20V4A1.75 1.75 0 016 2.25zm3.75 3.5h4.5v3h-4.5v-3zm0 4.5h4.5V13h-4.5v-2.75zM12 18.5a.75.75 0 100-1.5.75.75 0 000 1.5z"/>
+                        </svg>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{att.name || `Archive.${ext?.toUpperCase()}`}</div>
+                          <div className="text-xs text-muted-foreground truncate">Archive file ({ext?.toUpperCase()})</div>
+                        </div>
+                      </a>
+                    );
+                  }
+
+                  if (isLink) {
+                    return (
+                      <a
+                        key={idx}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-3 border rounded-lg p-3 bg-muted/30 hover:bg-muted/40 transition w-64"
+                        title={att.name || url}
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-blue-600">
+                          <path d="M13.5 3.75h6.75v6.75h-1.5V6.31l-8.72 8.72-1.06-1.06 8.72-8.72h-4.19v-1.5z"/>
+                          <path d="M6 5.25h5.25v1.5H6a.75.75 0 00-.75.75v9a.75.75 0 00.75.75h9a.75.75 0 00.75-.75V12.75h1.5V16.5A2.25 2.25 0 0115 18.75H6A2.25 2.25 0 013.75 16.5v-9A2.25 2.25 0 016 5.25z"/>
+                        </svg>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium truncate">{att.name || "Open link"}</div>
+                          <div className="text-xs text-muted-foreground truncate">{url}</div>
+                        </div>
+                      </a>
+                    );
+                  }
+
+                  // Fallback generic file
                   return (
                     <a
                       key={idx}
-                      href={att.url}
+                      href={url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="underline text-primary"
+                      className="flex items-center gap-3 border rounded-lg p-3 bg-muted/30 hover:bg-muted/40 transition w-64"
+                      title={att.name || url}
                     >
-                      {att.name || att.url}
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6 text-muted-foreground">
+                        <path d="M6.75 2.25h6.19c.46 0 .9.18 1.23.51l4.32 4.32c.33.33.51.77.51 1.23v11.19A2.25 2.25 0 0116.75 21.75h-10.5A2.25 2.25 0 013 19.5V4.5A2.25 2.25 0 015.25 2.25h1.5zM13.5 3.94V7.5h3.56L13.5 3.94z"/>
+                      </svg>
+                      <div className="flex-1 min-w-0">
+                        <div className="font-medium truncate">{att.name || `File${ext ? `.${ext.toUpperCase()}` : ''}`}</div>
+                        <div className="text-xs text-muted-foreground truncate">{ext ? `${ext.toUpperCase()} file` : 'File'}</div>
+                      </div>
                     </a>
                   );
                 })}

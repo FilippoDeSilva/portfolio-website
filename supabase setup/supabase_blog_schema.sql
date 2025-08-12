@@ -2,7 +2,7 @@
 create table if not exists blogposts (
   id uuid primary key default uuid_generate_v4(),
   title text not null,
-  excerpt text,
+  -- excerpt text,
   content text,
   cover_image text,
   media_url text,

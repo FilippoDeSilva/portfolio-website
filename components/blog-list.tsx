@@ -33,7 +33,7 @@ export function BlogList({
       const { data, error, count } = await supabase
         .from("blogposts")
         .select(
-          "id, title, excerpt, cover_image, media_url, media_type, created_at, likes, love, laugh, view_count",
+          "id, title, content, cover_image, media_url, media_type, created_at, likes, love, laugh, view_count",
           { count: "exact" }
         )
         .order("created_at", { ascending: false })
