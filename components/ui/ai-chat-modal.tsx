@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { marked } from "marked";
 import { v4 as uuidv4 } from "uuid";
+import { supabase } from "@/lib/supabaseClient";
 
 interface Message {
   role: "user" | "assistant";
@@ -17,6 +18,7 @@ interface Chat {
   messages: Message[];
   createdAt: string; // ISO string
   updatedAt: string; // ISO string
+  model?: string; // AI model used for this chat
 }
 
 // Local storage keys
@@ -37,6 +39,9 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
   const [showHistory, setShowHistory] = useState(false);
   const [editingTitleId, setEditingTitleId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -59,55 +64,100 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
 
   // Load chats (and migrate legacy single-thread history if present)
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(CHAT_CONVERSATIONS_KEY);
-      if (saved) {
-        const parsed: any[] = JSON.parse(saved);
-        const normalized: Chat[] = parsed.map((c: any) => ({
-          ...c,
-          messages: (c.messages || []).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })),
-        }));
-        setChats(normalized);
-        if (normalized.length > 0) {
-          setActiveChatId(normalized[0].id);
-          setMessages(normalized[0].messages || []);
+    async function checkAuthAndLoadChats() {
+      try {
+        setAuthLoading(true);
+        
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setIsAuthenticated(true);
+          setCurrentUserId(user.id);
+          
+          // Load chats directly from Supabase
+          const { data: dbChats, error } = await supabase
+            .from('chat_histories')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('updated_at', { ascending: false });
+          if (!error && dbChats) {
+            const normalized: Chat[] = dbChats.map((c: any) => ({
+              ...c,
+              id: c.id,
+              title: c.title,
+              messages: (c.messages || []).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })),
+              createdAt: c.created_at,
+              updatedAt: c.updated_at,
+              model: c.model,
+            }));
+            setChats(normalized);
+            if (normalized.length > 0) {
+              setActiveChatId(normalized[0].id);
+              setMessages(normalized[0].messages || []);
+            }
+          }
+        } else {
+          setIsAuthenticated(false);
+          await loadFromLocalStorage();
         }
-        return;
+      } catch (error) {
+        console.error('Error checking auth or loading chats:', error);
+        await loadFromLocalStorage();
+      } finally {
+        setAuthLoading(false);
       }
-      // Legacy migration
-      const legacy = localStorage.getItem(CHAT_HISTORY_KEY);
-      if (legacy) {
-        const legacyMsgs = JSON.parse(legacy).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
-        const chat: Chat = {
-          id: uuidv4(),
-          title: deriveTitleFromMessages(legacyMsgs),
-          messages: legacyMsgs,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        const list = [chat];
-        localStorage.setItem(CHAT_CONVERSATIONS_KEY, JSON.stringify(list));
-        localStorage.removeItem(CHAT_HISTORY_KEY);
-        setChats(list);
-        setActiveChatId(chat.id);
-        setMessages(chat.messages);
-      } else {
-        // Initialize with a fresh chat
-        const chat: Chat = {
-          id: uuidv4(),
-          title: "New Chat",
-          messages: [],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
-        setChats([chat]);
-        setActiveChatId(chat.id);
-        setMessages([]);
-        localStorage.setItem(CHAT_CONVERSATIONS_KEY, JSON.stringify([chat]));
-      }
-    } catch (error) {
-      console.error('❌ [Memory] Failed to load chats:', error);
     }
+
+    async function loadFromLocalStorage() {
+      try {
+        const saved = localStorage.getItem(CHAT_CONVERSATIONS_KEY);
+        if (saved) {
+          const parsed: any[] = JSON.parse(saved);
+          const normalized: Chat[] = parsed.map((c: any) => ({
+            ...c,
+            messages: (c.messages || []).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) })),
+          }));
+          setChats(normalized);
+          if (normalized.length > 0) {
+            setActiveChatId(normalized[0].id);
+            setMessages(normalized[0].messages || []);
+          }
+          return;
+        }
+        const legacy = localStorage.getItem(CHAT_HISTORY_KEY);
+        if (legacy) {
+          const legacyMsgs = JSON.parse(legacy).map((m: any) => ({ ...m, timestamp: new Date(m.timestamp) }));
+          const chat: Chat = {
+            id: uuidv4(),
+            title: deriveTitleFromMessages(legacyMsgs),
+            messages: legacyMsgs,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          const list = [chat];
+          localStorage.setItem(CHAT_CONVERSATIONS_KEY, JSON.stringify(list));
+          localStorage.removeItem(CHAT_HISTORY_KEY);
+          setChats(list);
+          setActiveChatId(chat.id);
+          setMessages(chat.messages);
+        } else {
+          const chat: Chat = {
+            id: uuidv4(),
+            title: "New Chat",
+            messages: [],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+          setChats([chat]);
+          setActiveChatId(chat.id);
+          setMessages([]);
+          localStorage.setItem(CHAT_CONVERSATIONS_KEY, JSON.stringify([chat]));
+        }
+      } catch (error) {
+        console.error('Error loading from localStorage:', error);
+      }
+    }
+
+    checkAuthAndLoadChats();
   }, []);
 
   // Persist chats whenever they change
@@ -136,7 +186,15 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
       };
       return updated;
     });
-  }, [messages, activeChatId]);
+
+    // Save to database or localStorage
+    if (activeChatId && messages.length > 0) {
+      const chat = chats.find(c => c.id === activeChatId);
+      if (chat) {
+        saveChat(activeChatId, chat.title, messages, selectedModel);
+      }
+    }
+  }, [messages, activeChatId, selectedModel]);
 
   useEffect(() => {
     if (open) {
@@ -166,19 +224,76 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
   }, [showModelDropdown]);
 
   // Start a new chat
-  const startNewChat = () => {
+  const startNewChat = async () => {
     const newChat: Chat = {
       id: uuidv4(),
       title: "New Chat",
       messages: [],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      model: selectedModel,
     };
+
+    if (isAuthenticated && currentUserId) {
+      const { data, error } = await supabase
+        .from('chat_histories')
+        .insert({
+          user_id: currentUserId,
+          title: newChat.title,
+          messages: newChat.messages,
+          model: newChat.model,
+        })
+        .select()
+        .single();
+      if (!error && data) {
+        newChat.id = data.id;
+        newChat.createdAt = data.created_at;
+        newChat.updatedAt = data.updated_at;
+      }
+    } else {
+      localStorage.setItem(CHAT_CONVERSATIONS_KEY, JSON.stringify([newChat, ...chats]));
+    }
+
     setChats(prev => [newChat, ...prev]);
     setActiveChatId(newChat.id);
     setMessages([]);
     setError(null);
     setStreamedContent("");
+  };
+
+  // Save chat to database or localStorage
+  const saveChat = async (chatId: string, title: string, msgs: Message[], model: string) => {
+    if (isAuthenticated && currentUserId) {
+      await supabase
+        .from('chat_histories')
+        .update({
+          title,
+          messages: msgs.map(m => ({ ...m, timestamp: m.timestamp.toISOString() })),
+          model,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', chatId)
+        .eq('user_id', currentUserId);
+    } else {
+      const updatedChats = chats.map(c => 
+        c.id === chatId 
+          ? { ...c, title, messages: msgs, updatedAt: new Date().toISOString(), model }
+          : c
+      );
+      localStorage.setItem(CHAT_CONVERSATIONS_KEY, JSON.stringify(updatedChats));
+    }
+  };
+
+  // Delete chat helper
+  const deleteChat = async (chatId: string) => {
+    if (isAuthenticated && currentUserId) {
+      await supabase
+        .from('chat_histories')
+        .delete()
+        .eq('id', chatId)
+        .eq('user_id', currentUserId);
+    }
+    setChats(prev => prev.filter(c => c.id !== chatId));
   };
 
   // Start editing a chat title
@@ -188,8 +303,13 @@ export default function AIChatModal({ open, onClose, onInsert }: { open: boolean
   };
 
   // Save the edited title
-  const saveTitle = () => {
+  const saveTitle = async () => {
     if (!editingTitleId || !editingTitle.trim()) return;
+    
+    const chat = chats.find(c => c.id === editingTitleId);
+    if (chat) {
+      await saveChat(editingTitleId, editingTitle.trim(), chat.messages, chat.model || selectedModel);
+    }
     
     setChats(prev => prev.map(chat => 
       chat.id === editingTitleId 
@@ -377,6 +497,16 @@ The final post should be polished and require little to no editing before publis
           <div className="flex items-center gap-2 font-semibold text-lg">
             <Sparkles className="w-6 h-6 text-primary animate-pulse" />
             AI Writing Assistant
+            {isAuthenticated && (
+              <span className="text-xs bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200 px-2 py-1 rounded-full">
+                🔒 Synced
+              </span>
+            )}
+            {!isAuthenticated && !authLoading && (
+              <span className="text-xs bg-yellow-100 dark:bg-yellow-900 text-yellow-800 dark:text-yellow-200 px-2 py-1 rounded-full">
+                💾 Local Only
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -422,7 +552,7 @@ The final post should be polished and require little to no editing before publis
               <div>
                 <span className="text-sm font-semibold">Chat History</span>
                 <div className="text-xs text-muted-foreground mt-1">
-                  💾 Local storage • Not synced across devices
+                  {isAuthenticated ? '🔒 Synced across devices' : '💾 Local storage only'}
                 </div>
               </div>
               <button
@@ -508,9 +638,8 @@ The final post should be polished and require little to no editing before publis
                             title="Delete chat"
                             aria-label="Delete chat"
                             onClick={() => {
-                              setChats(prev => prev.filter(c => c.id !== chat.id));
+                              deleteChat(chat.id);
                               if (activeChatId === chat.id) {
-                                // If deleting active, switch to first remaining or start new
                                 setTimeout(() => {
                                   if (chats.length > 1) {
                                     const next = chats.find(c => c.id !== chat.id);
