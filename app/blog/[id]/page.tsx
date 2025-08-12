@@ -147,7 +147,7 @@ return (
           <div className="p-6 flex flex-col gap-6">
             {/* Post Title, Excerpt, and Content */}
             <div className="space-y-4">
-              <h1 className="text-4xl font-extrabold leading-tight mb-2 bg-gradient-to-r from-blue-500 via-blue-400 to-blue-600 bg-clip-text text-transparent drop-shadow-sm">
+              <h1 className="text-primary dark:text-primary text-4xl font-extrabold leading-tight mb-2 drop-shadow-sm">
                 {post.title}
               </h1>
               <div className="flex items-center gap-4 mb-2">
