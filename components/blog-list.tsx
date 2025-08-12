@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { BlogCard, BlogPost } from "./blog-card";
 import { supabase } from "@/lib/supabaseClient";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 const POSTS_PER_PAGE = 9;

@@ -36,20 +36,25 @@ export function BlogCard({
   // Function to extract text preview from HTML content
   const getContentPreview = (htmlContent: string, maxWords: number = 20) => {
     if (!htmlContent) return "";
-    
-    // Remove HTML tags and decode HTML entities
-    const tempDiv = document.createElement('div');
-    tempDiv.innerHTML = htmlContent;
-    let text = tempDiv.textContent || tempDiv.innerText || "";
-    
-    // Clean up extra whitespace
-    text = text.replace(/\s+/g, ' ').trim();
-    
-    // Get first N words
-    const words = text.split(' ');
+
+    // Strip HTML tags safely without DOM APIs (SSR-safe)
+    const text = htmlContent
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, " ")
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, " ")
+      .replace(/<[^>]+>/g, " ")
+      .replace(/&nbsp;/gi, " ")
+      .replace(/&amp;/gi, "&")
+      .replace(/&lt;/gi, "<")
+      .replace(/&gt;/gi, ">")
+      .replace(/&quot;/gi, '"')
+      .replace(/&#39;/gi, "'")
+      .replace(/\s+/g, " ")
+      .trim();
+
+    const words = text.split(" ");
     if (words.length <= maxWords) return text;
-    
-    return words.slice(0, maxWords).join(' ') + '...';
+
+    return words.slice(0, maxWords).join(" ") + "...";
   };
 
   return (
@@ -197,11 +202,11 @@ export function BlogCard({
         style={{ flex: 1, minHeight: 0 }}
       >
         <div>
-          <h3 className="text-2xl font-bold line-clamp-2 text-primary dark:text-primary break-words">
+          <h3 className="text-base font-bold text-primary dark:text-primary break-words">
             {post.title}
           </h3>
           {post.content && (
-            <p className="text-muted-foreground mb-2 line-clamp-3">
+            <p className="text-muted-foreground mt-2 mb-2 line-clamp-3">
               {getContentPreview(post.content, 25)}
             </p>
           )}
