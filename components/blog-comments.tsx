@@ -1,6 +1,9 @@
+"use client"
+
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
+import { Send } from "lucide-react";
 
 interface Comment {
   id: string;
@@ -226,9 +229,11 @@ export function BlogComments({ postId }: { postId: string }) {
                   />
                   <button
                     type="submit"
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
+                    className="group bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded inline-flex items-center gap-1 transition-colors"
+                    aria-label="Send reply"
+                    title="Send reply"
                   >
-                    Reply
+                    <Send className="w-4 h-4 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </button>
                   <button
                     type="button"
@@ -287,9 +292,11 @@ export function BlogComments({ postId }: { postId: string }) {
           />
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded"
+            className="group bg-blue-600 text-white px-4 py-2 rounded inline-flex items-center justify-center hover:bg-blue-700 transition-colors"
+            aria-label="Post comment"
+            title="Post comment"
           >
-            Post
+            <Send className="w-5 h-5 transition-transform duration-150 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </button>
         </form>
       )}
