@@ -179,7 +179,7 @@ export function BlogCard({
         style={{ flex: 1, minHeight: 0 }}
       >
         <div>
-          <h3 className="text-2xl font-bold line-clamp-2 text-primary dark:text-blue-400 break-words">
+          <h3 className="text-2xl font-bold line-clamp-2 text-primary dark:text-primary break-words">
             {post.title}
           </h3>
           <p className="text-muted-foreground mb-2 line-clamp-3">
