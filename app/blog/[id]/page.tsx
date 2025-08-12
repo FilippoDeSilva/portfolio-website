@@ -313,7 +313,7 @@ return (
         </div>
         {/* Other Posts Section */}
         <div className="max-w-4xl mx-auto mt-8 rounded-2xl bg-gradient-to-br from-blue-50/60 via-background/80 to-blue-100/40 dark:from-blue-950/40 dark:via-background/80 dark:to-blue-900/30 shadow-lg border border-border p-8">
-          <h2 className="text-2xl font-bold mb-6 text-blue-700 dark:text-blue-300 tracking-tight">Other Posts</h2>
+          <h2 className="text-2xl font-bold mb-6 text-gray-400 dark:text-white tracking-tight">Other Posts</h2>
           <BlogList key={post.id} excludeId={post.id} columns={2} />
         </div>
       </div>
