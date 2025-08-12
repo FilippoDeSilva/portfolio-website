@@ -33,7 +33,7 @@ export default function BlogPage() {
               Latest Blog Posts
             </h2>
             <p className="max-w-2xl mx-auto text-muted-foreground">
-              Insights, tutorials, and stories from my journey in tech and design.
+            Thoughts, stories, and ideas from the things that spark my curiosity.
             </p>
           </div>
           <BlogList currentPage={currentPage} onDataLoaded={handleDataLoaded} />
