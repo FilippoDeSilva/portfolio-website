@@ -256,8 +256,8 @@ export default function Home() {
                 </h2>
                 <div className="space-y-4 text-muted-foreground">
                   <p>
-                    I'm a Junior Fullstack Developer, creating user-centered
-                    digital products for clients. As a Junior Developer I've
+                    I'm a Fullstack Developer, creating user-centered
+                    digital products for clients. As a Fullstack Developer I've
                     done some hobby projects ranging from school management
                     systems to automation scripts and my Computer Science 
                     background shaped how I approach problems and find optimal
