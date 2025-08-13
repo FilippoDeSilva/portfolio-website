@@ -239,7 +239,7 @@ export default function Home() {
                 <div className="absolute -inset-4 rounded-xl bg-primary/5 blur-lg"></div>
                 <div className="relative aspect-square overflow-hidden rounded-xl border border-border/50 bg-muted/20">
                   <Image
-                    src="https://cdn.pixabay.com/photo/2023/10/20/14/25/ai-generated-8329596_1280.jpg"
+                    src="https://cdn.pixabay.com/photo/2024/04/09/03/04/ai-generated-8684869_1280.jpg"
                     alt="Profile"
                     fill
                     priority
