@@ -7,11 +7,11 @@ export interface ImageLightboxProps {
   src: string;
   alt?: string;
   name?: string;
-  open: boolean;
-  onClose: () => void;
+  open?: boolean;
+  onClose?: () => void;
 }
 
-export default function ImageLightbox({ src, alt, name, open, onClose }: ImageLightboxProps) {
+export default function ImageLightbox({ src, alt, name, open = true, onClose }: ImageLightboxProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const imgRef = useRef<HTMLImageElement | null>(null);
   const [scale, setScale] = useState(0.8);
@@ -54,9 +54,9 @@ export default function ImageLightbox({ src, alt, name, open, onClose }: ImageLi
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
       <div className="absolute inset-0" onClick={onClose} />
-      <div ref={containerRef} className="relative max-w-[90vw] sm:max-w-[85vw] max-h-[90vh] p-4 bg-card border border-border rounded-xl shadow-xl">
+      <div ref={containerRef} className="relative w-full max-w-5xl p-4 bg-card border border-border rounded-xl shadow-xl">
         <button
           onClick={onClose}
           className="absolute top-2 right-2 z-20 inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary text-primary-foreground shadow hover:opacity-90"
@@ -66,7 +66,7 @@ export default function ImageLightbox({ src, alt, name, open, onClose }: ImageLi
           <X className="w-5 h-5" />
         </button>
         <div
-          className="relative overflow-hidden rounded-lg bg-black cursor-grab select-none w-[92vw] sm:w-[85vw] max-w-[1100px] h-[70vh] sm:h-[75vh] max-h-[85vh]"
+          className="relative overflow-hidden rounded-lg bg-black cursor-grab select-none w-full h-[60vh] sm:h-[70vh]"
           onMouseDown={onMouseDown}
           onMouseMove={onMouseMove}
           onMouseUp={onMouseUp}

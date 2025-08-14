@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { BlogList } from "@/components/blog-list";
 import Image from "next/image";
 import ImageLightbox from "@/components/ui/image-lightbox";
-import VideoModal from "@/components/ui/video-modal";
+import dynamic from "next/dynamic";
+const PlyrPlayer = dynamic(() => import("@/components/ui/plyr-player"), { ssr: false });
 
 export default function BlogDetailPage() {
   const params = useParams();
@@ -20,7 +21,7 @@ export default function BlogDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<{ open: boolean; src: string; name?: string } | null>(null);
-  const [videoModal, setVideoModal] = useState<{ open: boolean; src: string; name?: string } | null>(null);
+  const [playing, setPlaying] = useState<{ src: string; name?: string } | null>(null);
 
   useEffect(() => {
     async function fetchPost() {
@@ -114,10 +115,18 @@ export default function BlogDetailPage() {
   return (
   <>
       {lightbox?.open && (
-        <ImageLightbox open={lightbox.open} src={lightbox.src} name={lightbox.name} onClose={() => setLightbox(null)} />
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70">
+          <ImageLightbox open={lightbox.open} src={lightbox.src} name={lightbox.name} onClose={() => setLightbox(null)} />
+        </div>
       )}
-      {videoModal?.open && (
-        <VideoModal open={videoModal.open} src={videoModal.src} name={videoModal.name} onClose={() => setVideoModal(null)} />
+      {playing && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+          <div className="relative w-full max-w-5xl">
+            <div className="rounded-xl overflow-hidden bg-black">
+              <PlyrPlayer src={playing.src} className="w-full h-[60vh] sm:h-[70vh]" onClose={() => setPlaying(null)} />
+            </div>
+          </div>
+        </div>
       )}
     <TitleBar title={post?.title || "Blog Post"} />
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/40 py-16 px-2 md:px-0">
@@ -214,7 +223,7 @@ export default function BlogDetailPage() {
                         key={idx}
                         type="button"
                         className="flex items-center gap-3 border rounded-lg p-2 bg-muted/30 hover:bg-muted/40 transition w-full"
-                        onClick={() => setVideoModal({ open: true, src: url, name: att.name })}
+                        onClick={() => setPlaying({ src: url, name: att.name })}
                         title={att.name || url}
                       >
                         <div className="relative h-20 w-28 rounded overflow-hidden bg-black">
