@@ -209,7 +209,6 @@ export default function BlogDetailPage() {
                   }
 
                   if (isVideo) {
-                    const poster = post.cover_image || undefined;
                     return (
                       <button
                         key={idx}
@@ -218,13 +217,15 @@ export default function BlogDetailPage() {
                         onClick={() => setVideoModal({ open: true, src: url, name: att.name })}
                         title={att.name || url}
                       >
-                        <div className="relative h-20 w-28 rounded overflow-hidden">
-                          {poster ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img src={poster} alt={att.name || 'video'} className="h-full w-full object-cover" />
-                          ) : (
-                            <div className="h-full w-full bg-black/60" />
-                          )}
+                        <div className="relative h-20 w-28 rounded overflow-hidden bg-black">
+                          <video
+                            src={url}
+                            muted
+                            playsInline
+                            loop
+                            preload="metadata"
+                            className="h-full w-full object-cover"
+                          />
                           <div className="absolute inset-0 grid place-items-center">
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white drop-shadow">
                               <path d="M8 5v14l11-7z" />
