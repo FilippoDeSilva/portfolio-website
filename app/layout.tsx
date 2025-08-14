@@ -3,6 +3,7 @@ import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
 // import { Inter } from "next/font/google"
 import './globals.css'
+import "plyr-react/plyr.css";
 
 // const inter = Inter({ subsets: ["latin"] })
 

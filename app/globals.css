@@ -90,3 +90,22 @@ html {
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground));
 }
+
+/* Plyr sizing fixes: keep controls visible and inside container */
+.plyr{
+	width:100% !important;
+	height:100% !important;
+}
+.plyr__video-wrapper{
+	height:100% !important;
+}
+.plyr video{
+	width:100% !important;
+	height:100% !important;
+	object-fit:contain !important;
+	background:#000;
+}
+.plyr__controls{
+	opacity:1 !important;
+	transform:none !important;
+}
