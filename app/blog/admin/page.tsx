@@ -21,8 +21,8 @@ import { Button } from "@/components/ui/button";
 import { BlogCard } from "@/components/blog-card";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Download, Eye, EyeOff, LogOut, Sparkles, X } from "lucide-react";
-import ImageLightbox from "@/components/ui/image-lightbox";
-import VideoModal from "@/components/ui/video-modal";
+import ImageViewer from "@/components/ui/image-viewer";
+import VideoViewer from "@/components/ui/video-viewer";
 import { Plus, Trash2, Upload, Check, RefreshCw, Paperclip, Send } from "lucide-react";
 import AIChatModal from "@/components/ui/ai-chat-modal";
 import Link from "next/link";
@@ -208,8 +208,7 @@ export default function BlogAdmin() {
 
   const POSTS_PER_PAGE = 4;
   const [currentPage, setCurrentPage] = useState(1);
-  const [lightbox, setLightbox] = useState<{ open: boolean; src: string; name?: string } | null>(null);
-  const [videoModal, setVideoModal] = useState<{ open: boolean; src: string; name?: string } | null>(null);
+  const [lightbox, setLightbox] = useState<{ open: boolean; src: string; name?: string; type?: string } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -454,21 +453,26 @@ export default function BlogAdmin() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-background text-foreground min-h-screen">
-      {lightbox?.open && (
-        <ImageLightbox
-          open={lightbox.open}
-          src={lightbox.src}
-          name={lightbox.name}
-          onClose={() => setLightbox(null)}
-        />
-      )}
-      {videoModal?.open && (
-        <VideoModal
-          open={videoModal.open}
-          src={videoModal.src}
-          name={videoModal.name}
-          onClose={() => setVideoModal(null)}
-        />
+      {lightbox?.open && lightbox?.src && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+          <div className="relative w-full max-w-5xl">
+            {lightbox.type?.startsWith('video') ? (
+              <VideoViewer
+                src={lightbox.src}
+                name={lightbox.name}
+                className="w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden"
+                onClose={() => setLightbox(null)}
+              />
+            ) : (
+              <ImageViewer
+                src={lightbox.src}
+                alt={lightbox.name}
+                className="w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden"
+                onClose={() => setLightbox(null)}
+              />
+            )}
+          </div>
+        </div>
       )}
       <TitleBar title="Blog Admin">
         {user && (
@@ -703,9 +707,9 @@ export default function BlogAdmin() {
                           attachments={form.attachments}
                           onPreview={(att: { url: string; name?: string; type?: string; ext?: string }) => {
                             if (att?.type?.startsWith?.('image')) {
-                              setLightbox({ open: true, src: att.url, name: att.name });
+                              setLightbox({ open: true, src: att.url, name: att.name, type: 'image' });
                             } else if (att?.type?.startsWith?.('video')) {
-                              setVideoModal({ open: true, src: att.url, name: att.name });
+                              setLightbox({ open: true, src: att.url, name: att.name, type: 'video' });
                             } else {
                               window.open(att.url, '_blank');
                             }

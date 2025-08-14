@@ -366,6 +366,20 @@ export default function BlogDetailPage() {
           <BlogList key={post.id} excludeId={post.id} columns={2} />
         </div>
       </div>
+      
+      {/* Video Overlay */}
+      {playing?.src && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+          <div className="relative w-full max-w-5xl">
+            <PlyrPlayer 
+              src={playing.src} 
+              name={playing.name}
+              className="w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden" 
+              onClose={() => setPlaying(null)} 
+            />
+          </div>
+        </div>
+      )}
     </div>
   </>
 );

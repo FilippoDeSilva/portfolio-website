@@ -8,11 +8,12 @@ const Plyr = dynamic(() => import("plyr-react"), { ssr: false }) as any;
 export interface PlyrPlayerProps {
   src: string;
   poster?: string;
+  name?: string;
   className?: string;
   onClose?: () => void;
 }
 
-export default function PlyrPlayer({ src, poster, className, onClose }: PlyrPlayerProps) {
+export default function PlyrPlayer({ src, poster, name, className, onClose }: PlyrPlayerProps) {
   const source = useMemo(
     () => ({
       type: "video",
@@ -24,6 +25,13 @@ export default function PlyrPlayer({ src, poster, className, onClose }: PlyrPlay
 
   return (
     <div className={`relative ${className || ''}`} style={{ ["--plyr-color-main" as any]: "hsl(var(--primary))" }}>
+      {/* Video title display - top left corner */}
+      {name && (
+        <div className="absolute top-2 left-2 text-white text-sm bg-black/70 px-3 py-1 rounded-md z-10 font-medium">
+          {name}
+        </div>
+      )}
+      
       {onClose && (
         <button
           type="button"
