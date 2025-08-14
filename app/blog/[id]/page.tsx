@@ -12,6 +12,7 @@ import { BlogList } from "@/components/blog-list";
 import Image from "next/image";
 import ImageViewer from "@/components/ui/image-viewer";
 import dynamic from "next/dynamic";
+import NativeVideoPlayer from "@/components/ui/native-video-player";
 const PlyrPlayer = dynamic(() => import("@/components/ui/plyr-player"), { ssr: false });
 
 export default function BlogDetailPage() {
@@ -367,7 +368,7 @@ export default function BlogDetailPage() {
           }`}
         >
           <div className="relative w-full max-w-5xl">
-            <PlyrPlayer 
+            <NativeVideoPlayer 
               src={playing.src} 
               name={playing.name}
               className={isPIPActive ? "absolute -left-[9999px] w-[1px] h-[1px] opacity-0 pointer-events-none" : "w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden"} 
@@ -376,7 +377,6 @@ export default function BlogDetailPage() {
                 setIsPIPActive(false);
               }}
               onPIPChange={(isActive) => {
-                // Toggle overlay visibility without unmounting the player
                 setIsPIPActive(isActive);
               }}
             />

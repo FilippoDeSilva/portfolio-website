@@ -22,6 +22,7 @@ import { BlogCard } from "@/components/blog-card";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Download, Eye, EyeOff, LogOut, Sparkles, X } from "lucide-react";
 import ImageViewer from "@/components/ui/image-viewer";
+import NativeVideoPlayer from "@/components/ui/native-video-player";
 import PlyrPlayer from "@/components/ui/plyr-player";
 import { Plus, Trash2, Upload, Check, RefreshCw, Paperclip, Send } from "lucide-react";
 import AIChatModal from "@/components/ui/ai-chat-modal";
@@ -466,7 +467,19 @@ export default function BlogAdmin() {
         >
           <div className="relative w-full max-w-5xl">
             {lightbox.type?.startsWith('video') ? (
-              <PlyrPlayer
+              																																																																																																										
+              																																																																
+              																										
+              																		
+              										
+              										
+              										
+              										
+              										
+              										
+              										
+              										
+              			<NativeVideoPlayer
                 src={lightbox.src}
                 name={lightbox.name}
                 className={isPIPActive ? "absolute -left-[9999px] w-[1px] h-[1px] opacity-0 pointer-events-none" : "w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden"}
@@ -475,7 +488,6 @@ export default function BlogAdmin() {
                   setIsPIPActive(false);
                 }}
                 onPIPChange={(isActive) => {
-                  // Toggle overlay visibility without unmounting the player
                   setIsPIPActive(isActive);
                 }}
               />
