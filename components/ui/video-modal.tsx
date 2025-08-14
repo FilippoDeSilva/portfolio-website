@@ -2,7 +2,11 @@
 
 import React from "react";
 import { X } from "lucide-react";
-import PlyrPlayer from "@/components/ui/plyr-player";
+import dynamic from "next/dynamic";
+
+const PlyrPlayer = dynamic(() => import("@/components/ui/plyr-player"), {
+  ssr: false,
+});
 
 export interface VideoModalProps {
   open: boolean;

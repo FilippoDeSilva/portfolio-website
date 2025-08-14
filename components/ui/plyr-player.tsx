@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useMemo } from "react";
-import Plyr from "plyr-react";
+import dynamic from "next/dynamic";
+const Plyr = dynamic(() => import("plyr-react"), { ssr: false }) as any;
 
 export interface PlyrPlayerProps {
   src: string;
