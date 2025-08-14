@@ -19,7 +19,9 @@ import Paragraph from '@tiptap/extension-paragraph';
 import { Button } from "@/components/ui/button";
 import { BlogCard } from "@/components/blog-card";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Eye, EyeOff, LogOut, Sparkles, X } from "lucide-react";
+import { Download, Eye, EyeOff, LogOut, Sparkles, X } from "lucide-react";
+import ImageLightbox from "@/components/ui/image-lightbox";
+import VideoModal from "@/components/ui/video-modal";
 import { Plus, Trash2, Upload, Check, RefreshCw, Paperclip, Send } from "lucide-react";
 import AIChatModal from "@/components/ui/ai-chat-modal";
 import Link from "next/link";
@@ -205,6 +207,8 @@ export default function BlogAdmin() {
 
   const POSTS_PER_PAGE = 4;
   const [currentPage, setCurrentPage] = useState(1);
+  const [lightbox, setLightbox] = useState<{ open: boolean; src: string; name?: string } | null>(null);
+  const [videoModal, setVideoModal] = useState<{ open: boolean; src: string; name?: string } | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -291,6 +295,20 @@ export default function BlogAdmin() {
   async function handleCoverImageUpload(file: File) {
     setCoverUploadStatus(`Uploading cover: ${file.name} ...`);
     try {
+      // If there is an existing cover image, delete it from Supabase storage first (server-side)
+      if (form.cover_image) {
+        try {
+          await fetch('/api/admin/delete-blog-files', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cover_image: form.cover_image, attachments: [] }),
+          });
+          console.log('[Cover Upload] previous cover deleted');
+        } catch (delErr) {
+          console.warn('[Cover Upload] could not delete previous cover (continuing):', delErr);
+        }
+      }
+
       const path = makeSafeStoragePath('cover-images', file.name);
       console.log('[Cover Upload] start', { fileName: file.name, path });
       const { data, error } = await supabase.storage.from('blog-attachments').upload(path, file);
@@ -390,8 +408,67 @@ export default function BlogAdmin() {
   const totalPages = Math.ceil(posts.length / POSTS_PER_PAGE);
   const paginatedPosts = posts.slice((currentPage - 1) * POSTS_PER_PAGE, currentPage * POSTS_PER_PAGE);
 
+  function AttachmentsGrid({ attachments, onPreview, onRemove }: { attachments: { url: string; name?: string; type?: string; ext?: string }[]; onPreview?: (att: { url: string; name?: string; type?: string; ext?: string }) => void; onRemove: (i: number) => void; }) {
+    return (
+      <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        {attachments.map((att, idx) => {
+          const isImage = att?.type?.startsWith?.('image');
+          const isVideo = att?.type?.startsWith?.('video');
+          return (
+            <div key={idx} className="flex items-center justify-between gap-3 rounded-lg bg-muted dark:bg-secondary p-2 border border-border dark:border-border shadow-sm">
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-medium">{att.name}</div>
+                <div className="text-xs text-muted-foreground truncate">{att.type || att.ext || 'attachment'}</div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  className="px-2 py-1 text-xs rounded bg-background border border-border hover:bg-accent"
+                  onClick={() => onPreview?.(att)}
+                >
+                  <Eye className="w-5 h-5" />
+                </button>
+                <a
+                  href={att.url}
+                  download={att.name || true}
+                  className="px-2 py-1 text-xs rounded bg-primary text-primary-foreground hover:bg-primary/90"
+                >
+                  <Download className="w-4 h-5 " />
+                </a>
+                <button
+                  type="button"
+                  onClick={() => onRemove(idx)}
+                  className="text-gray-400 hover:text-red-500 transition-colors duration-150"
+                  aria-label="Remove Attachment"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-background text-foreground min-h-screen">
+      {lightbox?.open && (
+        <ImageLightbox
+          open={lightbox.open}
+          src={lightbox.src}
+          name={lightbox.name}
+          onClose={() => setLightbox(null)}
+        />
+      )}
+      {videoModal?.open && (
+        <VideoModal
+          open={videoModal.open}
+          src={videoModal.src}
+          name={videoModal.name}
+          onClose={() => setVideoModal(null)}
+        />
+      )}
       <TitleBar title="Blog Admin">
         {user && (
           <Button
@@ -621,21 +698,19 @@ export default function BlogAdmin() {
                       </button>
                     </div>
                     {form.attachments && form.attachments.length > 0 && (
-                        <div className="mt-3 flex flex-wrap gap-2">
-                        {form.attachments.map((att, idx) => (
-                            <div key={idx} className="flex items-center gap-2 rounded-lg bg-muted dark:bg-secondary p-2 border border-border dark:border-border shadow-sm">
-                            <a href={att.url} target="_blank" rel="noopener noreferrer" className="underline text-primary">{att.name}</a>
-                            <button
-                              type="button"
-                              onClick={() => setForm(f => ({ ...f, attachments: f.attachments.filter((_, i) => i !== idx) }))}
-                              className="text-gray-400 hover:text-red-500 transition-colors duration-150"
-                              aria-label="Remove Attachment"
-                            >
-                              <Trash2 className="w-5 h-5" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
+                        <AttachmentsGrid
+                          attachments={form.attachments}
+                          onPreview={(att: { url: string; name?: string; type?: string; ext?: string }) => {
+                            if (att?.type?.startsWith?.('image')) {
+                              setLightbox({ open: true, src: att.url, name: att.name });
+                            } else if (att?.type?.startsWith?.('video')) {
+                              setVideoModal({ open: true, src: att.url, name: att.name });
+                            } else {
+                              window.open(att.url, '_blank');
+                            }
+                          }}
+                          onRemove={(i) => setForm(f => ({ ...f, attachments: f.attachments.filter((_, idx) => idx !== i) }))}
+                        />
                     )}
                   </div>
                   </CardContent>

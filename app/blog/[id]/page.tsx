@@ -10,6 +10,8 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { BlogList } from "@/components/blog-list";
 import Image from "next/image";
+import ImageLightbox from "@/components/ui/image-lightbox";
+import VideoModal from "@/components/ui/video-modal";
 
 export default function BlogDetailPage() {
   const params = useParams();
@@ -17,6 +19,8 @@ export default function BlogDetailPage() {
   const [post, setPost] = useState<BlogPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [lightbox, setLightbox] = useState<{ open: boolean; src: string; name?: string } | null>(null);
+  const [videoModal, setVideoModal] = useState<{ open: boolean; src: string; name?: string } | null>(null);
 
   useEffect(() => {
     async function fetchPost() {
@@ -107,8 +111,14 @@ export default function BlogDetailPage() {
   if (error) return <div className="py-24 text-center text-red-500">Error: {error}</div>;
   if (!post) return <div className="py-24 text-center">Blog post not found.</div>;
 
-return (
+  return (
   <>
+      {lightbox?.open && (
+        <ImageLightbox open={lightbox.open} src={lightbox.src} name={lightbox.name} onClose={() => setLightbox(null)} />
+      )}
+      {videoModal?.open && (
+        <VideoModal open={videoModal.open} src={videoModal.src} name={videoModal.name} onClose={() => setVideoModal(null)} />
+      )}
     <TitleBar title={post?.title || "Blog Post"} />
     <div className="min-h-screen bg-gradient-to-br from-background to-muted/40 py-16 px-2 md:px-0">
       <div className="max-w-3xl mx-auto">
@@ -156,7 +166,7 @@ return (
             </div>
             {/* Attachments */}
             {post.attachments && Array.isArray(post.attachments) && post.attachments.length > 0 && (
-              <div className="flex flex-wrap gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {post.attachments.map((att: any, idx: number) => {
                   if (!att?.url) return null;
 
@@ -182,23 +192,50 @@ return (
 
                   if (isImage) {
                     return (
-                      <img
+                      <button
                         key={idx}
-                        src={url}
-                        alt={att.name || `attachment-${idx}`}
-                        className="rounded-lg max-h-48 max-w-xs object-cover border"
-                      />
+                        type="button"
+                        className="flex items-center gap-3 border rounded-lg p-2 bg-muted/30 hover:bg-muted/40 transition w-full"
+                        onClick={() => setLightbox({ open: true, src: url, name: att.name })}
+                        title={att.name || url}
+                      >
+                        <img src={url} alt={att.name || `attachment-${idx}`} className="h-20 w-28 object-cover rounded" />
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="font-medium truncate">{att.name || `Image`}</div>
+                          <div className="text-xs text-muted-foreground truncate">Click to view</div>
+                        </div>
+                      </button>
                     );
                   }
 
                   if (isVideo) {
+                    const poster = post.cover_image || undefined;
                     return (
-                      <video
+                      <button
                         key={idx}
-                        src={url}
-                        controls
-                        className="rounded-lg max-h-48 max-w-xs border"
-                      />
+                        type="button"
+                        className="flex items-center gap-3 border rounded-lg p-2 bg-muted/30 hover:bg-muted/40 transition w-full"
+                        onClick={() => setVideoModal({ open: true, src: url, name: att.name })}
+                        title={att.name || url}
+                      >
+                        <div className="relative h-20 w-28 rounded overflow-hidden">
+                          {poster ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={poster} alt={att.name || 'video'} className="h-full w-full object-cover" />
+                          ) : (
+                            <div className="h-full w-full bg-black/60" />
+                          )}
+                          <div className="absolute inset-0 grid place-items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-white drop-shadow">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="font-medium truncate">{att.name || `Video`}</div>
+                          <div className="text-xs text-muted-foreground truncate">Click to play</div>
+                        </div>
+                      </button>
                     );
                   }
 
