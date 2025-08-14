@@ -162,6 +162,8 @@ export default function BlogAdmin() {
   const [coverImageUrlInput, setCoverImageUrlInput] = useState("");
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [attachmentUrlInput, setAttachmentUrlInput] = useState("");
+  const [coverUploadStatus, setCoverUploadStatus] = useState<string | null>(null);
+  const [attachmentUploadStatus, setAttachmentUploadStatus] = useState<string | null>(null);
   const [deleteModal, setDeleteModal] = useState<{ open: boolean; postId: string | null }>({ open: false, postId: null });
   const [loginLoading, setLoginLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
@@ -270,20 +272,44 @@ export default function BlogAdmin() {
     setUser(null);
   }
 
+  function slugifyFilename(name: string) {
+    const normalized = name
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '') // remove diacritics
+      .replace(/[^a-zA-Z0-9._-]/g, '-') // replace spaces and invalid chars
+      .replace(/-+/g, '-') // collapse dashes
+      .replace(/^[-.]+|[-.]+$/g, ''); // trim leading/trailing separators
+    return normalized || 'file';
+  }
+
+  function makeSafeStoragePath(prefix: string, originalName: string) {
+    const safeName = slugifyFilename(originalName);
+    return `${prefix}/${Date.now()}-${safeName}`;
+  }
+
   // --- Cover Image Upload Handler ---
   async function handleCoverImageUpload(file: File) {
-    const ext = file.name.split('.')?.pop();
-    const path = `cover-images/${Date.now()}-${file.name}`;
-    const { data, error } = await supabase.storage.from('blog-attachments').upload(path, file);
-    if (error) {
-      alert("Cover image upload failed: " + error.message);
-      console.error("Cover image upload error:", error);
-      return;
-    }
-    if (data) {
-      const url = supabase.storage.from('blog-attachments').getPublicUrl(path).data.publicUrl;
-      setForm(f => ({ ...f, cover_image: url }));
-      setCoverImageFile(null);
+    setCoverUploadStatus(`Uploading cover: ${file.name} ...`);
+    try {
+      const path = makeSafeStoragePath('cover-images', file.name);
+      console.log('[Cover Upload] start', { fileName: file.name, path });
+      const { data, error } = await supabase.storage.from('blog-attachments').upload(path, file);
+      if (error) {
+        console.error("Cover image upload error:", error);
+        alert("Cover image upload failed: " + error.message);
+        return;
+      }
+      if (data) {
+        const url = supabase.storage.from('blog-attachments').getPublicUrl(path).data.publicUrl;
+        console.log('[Cover Upload] success', { url });
+        setForm(f => ({ ...f, cover_image: url }));
+        setCoverImageFile(null);
+      }
+    } catch (err: any) {
+      console.error('[Cover Upload] unexpected error', err);
+      alert('Cover image upload failed unexpectedly. See console for details.');
+    } finally {
+      setCoverUploadStatus(null);
     }
   }
 
@@ -291,22 +317,34 @@ export default function BlogAdmin() {
   async function handleAttachmentFiles(files: FileList | null) {
     if (!files) return;
     const uploaded: any[] = [];
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      const ext = file.name.split('.')?.pop();
-      const path = `attachments/${Date.now()}-${file.name}`;
-      const { data, error } = await supabase.storage.from('blog-attachments').upload(path, file);
-      if (error) {
-        alert(`Attachment upload failed for ${file.name}: ` + error.message);
-        console.error(`Attachment upload error for ${file.name}:`, error);
-        continue;
+    try {
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const ext = file.name.split('.')?.pop();
+        const path = makeSafeStoragePath('attachments', file.name);
+        setAttachmentUploadStatus(`Uploading ${i + 1}/${files.length}: ${file.name}`);
+        console.log('[Attachment Upload] start', { index: i, fileName: file.name, path });
+        const { data, error } = await supabase.storage.from('blog-attachments').upload(path, file);
+        if (error) {
+          console.error(`Attachment upload error for ${file.name}:`, error);
+          alert(`Attachment upload failed for ${file.name}: ` + error.message);
+          continue;
+        }
+        if (data) {
+          const url = supabase.storage.from('blog-attachments').getPublicUrl(path).data.publicUrl;
+          console.log('[Attachment Upload] success', { index: i, url });
+          uploaded.push({ url, name: file.name, type: file.type, ext });
+        }
       }
-      if (data) {
-        const url = supabase.storage.from('blog-attachments').getPublicUrl(path).data.publicUrl;
-        uploaded.push({ url, name: file.name, type: file.type, ext });
+      if (uploaded.length > 0) {
+        setForm(f => ({ ...f, attachments: [...(f.attachments || []), ...uploaded] }));
       }
+    } catch (err: any) {
+      console.error('[Attachment Upload] unexpected error', err);
+      alert('Attachment upload failed unexpectedly. See console for details.');
+    } finally {
+      setAttachmentUploadStatus(null);
     }
-    setForm(f => ({ ...f, attachments: [...(f.attachments || []), ...uploaded] }));
   }
 
   async function handleSubmit(e: any) {
@@ -489,6 +527,9 @@ export default function BlogAdmin() {
                   {/* Excerpt removed from UI as requested */}
                   <div>
                       <label htmlFor="cover_image" className="block text-sm font-medium text-muted-foreground mb-1">Cover Image</label>
+                      {coverUploadStatus && (
+                        <div className="text-xs text-muted-foreground mb-1">{coverUploadStatus}</div>
+                      )}
                       <div className="flex flex-col sm:flex-row gap-2 mt-1">
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input
@@ -533,6 +574,9 @@ export default function BlogAdmin() {
                   </div>
                   <div>
                       <label className="block text-sm font-medium text-muted-foreground mb-1">Attachments <span className="text-xs text-muted-foreground">(optional, multiple)</span></label>
+                      {attachmentUploadStatus && (
+                        <div className="text-xs text-muted-foreground mb-1">{attachmentUploadStatus}</div>
+                      )}
                       <div className="flex flex-col sm:flex-row gap-2 mt-1">
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input

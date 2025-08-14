@@ -49,12 +49,12 @@ export default function Home() {
     {
       name: "Backend Development",
       icon: <Server className="size-6 text-primary" />,
-      items: ["Next.js", "React", "Node.js", "Python", "Java", "RESTful APIs"],
+      items: ["Next.js", "Node.js", "Python", "RESTful APIs"],
     },
     {
       name: "Database Management",
       icon: <Database className="size-6 text-primary" />,
-      items: ["PostgreSQL", "MongoDB", "Prisma", "SQL", "Data Modeling"],
+      items: ["PostgreSQL", "MongoDB", "Prisma", "SQL"],
     },
     {
       name: "UI/UX Design",
