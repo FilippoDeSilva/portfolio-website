@@ -97,7 +97,7 @@ export default function VideoPlayer({ src, poster, className, ...props }: VideoP
         ref={videoRef}
         src={src}
         poster={poster}
-        className="w-full h-full max-h-[70vh] object-contain bg-black"
+        className="w-full h-full object-contain bg-black"
         onClick={togglePlay}
         controls={false}
       />
