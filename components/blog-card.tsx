@@ -33,6 +33,17 @@ export function BlogCard({
   const [modalOpen, setModalOpen] = React.useState(false);
   const [modalFile, setModalFile] = React.useState<any>(null);
 
+  // Function to get base filename for thumbnail matching
+  const getBase = (s?: string) => {
+    if (!s) return '';
+    try {
+      const u = new URL(s, s.startsWith('http') ? undefined : 'http://local');
+      s = u.pathname;
+    } catch {}
+    const last = s.split('/').pop() || s;
+    return (last.includes('.') ? last.substring(0, last.lastIndexOf('.')) : last).toLowerCase();
+  };
+
   // Function to extract text preview from HTML content
   const getContentPreview = (htmlContent: string, maxWords: number = 20) => {
     if (!htmlContent) return "";
@@ -120,81 +131,149 @@ export function BlogCard({
         </div>
       )}
 
-      {/* Media preview - Image */}
-      {post.media_url && post.media_type?.startsWith("image") && (
-        <div className="relative w-full" style={{ height: "44%" }}>
-          <Image
-            src={post.media_url}
-            alt={post.title}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-            sizes="(max-width: 640px) 100vw, 700px"
-            priority
-          />
-        </div>
-      )}
-
-      {/* Media preview - Video */}
-      {post.media_url && post.media_type?.startsWith("video") && (
-        <div className="relative w-full aspect-[16/9] bg-muted overflow-hidden">
-          <video controls className="w-full h-full object-cover rounded-none">
-            <source src={post.media_url} type={post.media_type} />
-            Your browser does not support the video tag.
-          </video>
-        </div>
-      )}
-
-      {/* Media preview - PDF */}
-      {post.media_url && post.media_type === "application/pdf" && (
-        <a
-          href={post.media_url}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex w-full aspect-[16/9] bg-muted items-center justify-center hover:bg-primary/10 transition"
-        >
-          <span className="text-primary font-semibold text-lg flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="w-6 h-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
+      {/* Determine what to show based on media type and available thumbnails */}
+      {(() => {
+        // For audio posts, prioritize music thumbnail over everything
+        if (post.media_url && post.media_type?.startsWith("audio")) {
+          const base = getBase(post.media_url);
+          const thumbAtt = (post.attachments || []).find((x: any) => x?.type?.startsWith?.('image') && getBase(x.name || x.url) === base);
+          const thumb = thumbAtt?.url as string | undefined;
+          
+          return (
+            <div className="w-full">
+              {thumb ? (
+                <div className="relative w-full" style={{ height: "44%" }}>
+                  <Image
+                    src={thumb}
+                    alt={post.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 640px) 100vw, 700px"
+                    priority
+                  />
+                </div>
+              ) : post.cover_image ? (
+                <div className="relative w-full" style={{ height: "44%" }}>
+                  <Image
+                    src={post.cover_image}
+                    alt={post.title}
+                    fill
+                    className="object-cover group-hover:scale-105 transition-transform duration-500"
+                    sizes="(max-width: 640px) 100vw, 700px"
+                    priority
+                  />
+                </div>
+              ) : (
+                <div className="relative w-full bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center" style={{ height: "44%" }}>
+                  <svg width="64" height="40" viewBox="0 0 64 40" aria-hidden="true" className="text-primary/60">
+                    <rect x="8" y="10" width="8" height="20" fill="currentColor" opacity="0.8">
+                      <animate attributeName="height" values="10;26;10" dur="1s" repeatCount="indefinite"/>
+                      <animate attributeName="y" values="15;7;15" dur="1s" repeatCount="indefinite"/>
+                    </rect>
+                    <rect x="24" y="5" width="8" height="30" fill="currentColor" opacity="0.7">
+                      <animate attributeName="height" values="20;34;20" dur="1.2s" repeatCount="indefinite"/>
+                      <animate attributeName="y" values="10;3;10" dur="1.2s" repeatCount="indefinite"/>
+                    </rect>
+                    <rect x="40" y="12" width="8" height="16" fill="currentColor" opacity="0.8">
+                      <animate attributeName="height" values="8;24;8" dur="0.9s" repeatCount="indefinite"/>
+                      <animate attributeName="y" values="16;8;16" dur="0.9s" repeatCount="indefinite"/>
+                    </rect>
+                    <rect x="56" y="8" width="8" height="24" fill="currentColor" opacity="0.6">
+                      <animate attributeName="height" values="16;30;16" dur="1.1s" repeatCount="indefinite"/>
+                      <animate attributeName="y" values="12;5;12" dur="1.1s" repeatCount="indefinite"/>
+                    </rect>
+                  </svg>
+                </div>
+              )}
+              <div className="px-4 py-3 bg-muted/30">
+                <audio controls preload="metadata" className="w-full themed-audio-player">
+                  <source src={post.media_url} type={post.media_type} />
+                  Your browser does not support the audio element.
+                </audio>
+              </div>
+            </div>
+          );
+        }
+        
+        // For other media types, use the standard logic
+        if (post.media_url && post.media_type?.startsWith("image")) {
+          return (
+            <div className="relative w-full" style={{ height: "44%" }}>
+              <Image
+                src={post.media_url}
+                alt={post.title}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                sizes="(max-width: 640px) 100vw, 700px"
+                priority
               />
-            </svg>
-            View PDF
-          </span>
-        </a>
-      )}
-
-      {/* Media preview - Audio */}
-      {post.media_url && post.media_type?.startsWith("audio") && (
-        <div className="w-full px-4 py-3 bg-muted flex items-center">
-          <audio controls className="w-full">
-            <source src={post.media_url} type={post.media_type} />
-            Your browser does not support the audio element.
-          </audio>
-        </div>
-      )}
-
-      {/* Fallback Cover Image */}
-      {!post.media_url && post.cover_image && (
-        <div className="relative w-full" style={{ height: "44%" }}>
-          <Image
-            src={post.cover_image}
-            alt={post.title}
-            fill
-            className="object-cover group-hover:scale-105 transition-transform duration-500"
-            sizes="(max-width: 640px) 100vw, 700px"
-            priority
-          />
-        </div>
-      )}
+            </div>
+          );
+        }
+        
+        if (post.media_url && post.media_type?.startsWith("video")) {
+          return (
+            <div className="relative w-full aspect-[16/9] bg-muted overflow-hidden">
+              <video 
+                controls 
+                preload="metadata" 
+                playsInline 
+                className="w-full h-full object-cover rounded-none themed-video-player"
+              >
+                <source src={post.media_url} type={post.media_type} />
+                Your browser does not support the video tag.
+              </video>
+            </div>
+          );
+        }
+        
+        if (post.media_url && post.media_type === "application/pdf") {
+          return (
+            <a
+              href={post.media_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex w-full aspect-[16/9] bg-muted items-center justify-center hover:bg-primary/10 transition"
+            >
+              <span className="text-primary font-semibold text-lg flex items-center gap-2">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-6 h-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 4v16m8-8H4"
+                  />
+                </svg>
+                View PDF
+              </span>
+            </a>
+          );
+        }
+        
+        // Fallback to cover image if no media_url
+        if (post.cover_image) {
+          return (
+            <div className="relative w-full" style={{ height: "44%" }}>
+              <Image
+                src={post.cover_image}
+                alt={post.title}
+                fill
+                className="object-cover group-hover:scale-105 transition-transform duration-500"
+                sizes="(max-width: 640px) 100vw, 700px"
+                priority
+              />
+            </div>
+          );
+        }
+        
+        return null;
+      })()}
 
       {/* Content */}
       <div

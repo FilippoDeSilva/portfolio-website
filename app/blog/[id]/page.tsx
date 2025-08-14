@@ -13,7 +13,8 @@ import Image from "next/image";
 import ImageViewer from "@/components/ui/image-viewer";
 import dynamic from "next/dynamic";
 import NativeVideoPlayer from "@/components/ui/native-video-player";
-const PlyrPlayer = dynamic(() => import("@/components/ui/plyr-player"), { ssr: false });
+import NativeAudioPlayer from "@/components/ui/native-audio-player";
+// const PlyrPlayer = dynamic(() => import("@/components/ui/plyr-player"), { ssr: false });
 
 export default function BlogDetailPage() {
   const params = useParams();
@@ -117,7 +118,7 @@ export default function BlogDetailPage() {
   return (
   <>
       {lightbox?.open && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+        <div className="fixed inset-0 z-50 grid place-items-center bg-background/30 dark:bg-black/30 backdrop-blur-md p-4">
           <div className="relative w-full max-w-5xl">
             <ImageViewer src={lightbox.src} alt={lightbox.name} className="w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden" onClose={() => setLightbox(null)} />
           </div>
@@ -245,8 +246,52 @@ export default function BlogDetailPage() {
                   }
 
                   if (isAudio) {
+                    console.log('[BLOG AUDIO DEBUG] Audio attachment:', att);
+                    
+                    // Check for embedded thumbnail first (from music-metadata extraction)
+                    let thumbnail = att.thumbnail;
+                    let metadata = att.metadata;
+                    console.log('[BLOG AUDIO DEBUG] Direct thumbnail from attachment:', thumbnail);
+                    console.log('[BLOG AUDIO DEBUG] Metadata from attachment:', metadata);
+                    
+                    // Fallback to filename matching if no embedded thumbnail
+                    if (!thumbnail) {
+                      console.log('[BLOG AUDIO DEBUG] No direct thumbnail, searching for matching image...');
+                      const getBase = (s?: string) => {
+                        if (!s) return '';
+                        try {
+                          const u = new URL(s, s.startsWith('http') ? undefined : 'http://local');
+                          s = u.pathname;
+                        } catch {}
+                        const last = s.split('/').pop() || s;
+                        return (last.includes('.') ? last.substring(0, last.lastIndexOf('.')) : last).toLowerCase();
+                      };
+                      const base = getBase(att.name || url);
+                      console.log('[BLOG AUDIO DEBUG] Audio base name:', base);
+                      const thumbAtt = (post.attachments || []).find((x: any) => {
+                        const isImage = x?.type?.startsWith?.('image');
+                        const matchesBase = getBase(x.name || x.url) === base;
+                        console.log('[BLOG AUDIO DEBUG] Checking attachment:', { name: x.name, type: x.type, isImage, matchesBase, base: getBase(x.name || x.url) });
+                        return isImage && matchesBase;
+                      });
+                      thumbnail = thumbAtt?.url;
+                      console.log('[BLOG AUDIO DEBUG] Found matching image:', thumbAtt?.url);
+                    }
+                    
+                    // DO NOT fallback to cover image - let the audio player handle its own fallback
+                    console.log('[BLOG AUDIO DEBUG] Final thumbnail to pass:', thumbnail);
+                    
                     return (
-                      <audio key={idx} src={url} controls className="w-full max-w-xs border rounded-lg" />
+                      <div key={idx} className="w-full">
+                        <NativeAudioPlayer 
+                          src={url} 
+                          name={att.name || `Audio`}
+                          thumbnail={thumbnail}
+                          title={metadata?.title}
+                          artist={metadata?.artist}
+                          album={metadata?.album}
+                        />
+                      </div>
                     );
                   }
 
@@ -363,8 +408,8 @@ export default function BlogDetailPage() {
       {/* Video Overlay - keep player mounted; make overlay invisible in PIP */}
       {playing?.src && (
         <div
-          className={`fixed inset-0 z-50 grid place-items-center p-4 transition-opacity duration-200 ${
-            isPIPActive ? 'bg-transparent opacity-0 pointer-events-none' : 'bg-black/70 opacity-100'
+          className={`fixed inset-0 z-50 grid place-items-center p-4 transition-opacity duration-200 backdrop-blur-sm ${
+            isPIPActive ? 'bg-transparent opacity-0 pointer-events-none' : 'bg-background/30 dark:bg-black/30 opacity-100'
           }`}
         >
           <div className="relative w-full max-w-5xl">

@@ -14,7 +14,7 @@ export type MediaModalProps = {
 export default function MediaModal({ open, onClose, file }: MediaModalProps) {
   if (!open || !file) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
+      <div className="fixed inset-0 z-50 bg-background/30 dark:bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg max-w-lg w-full p-4 relative flex flex-col items-center">
         <button
           onClick={onClose}
@@ -27,9 +27,9 @@ export default function MediaModal({ open, onClose, file }: MediaModalProps) {
           {file.type?.startsWith("image") ? (
             <img src={file.url} alt={file.name} className="max-h-96 rounded mb-2" />
           ) : file.type?.startsWith("video") ? (
-            <video src={file.url} controls autoPlay className="max-h-96 rounded mb-2" />
+            <video src={file.url} controls preload="metadata" playsInline className="max-h-96 rounded mb-2 themed-video-player" />
           ) : file.type?.startsWith("audio") ? (
-            <audio src={file.url} controls className="w-full mb-2" />
+            <audio src={file.url} controls preload="metadata" className="w-full mb-2 themed-audio-player" />
           ) : file.ext === "pdf" ? (
             <iframe src={file.url} title={file.name} className="w-full h-96 mb-2" />
           ) : (

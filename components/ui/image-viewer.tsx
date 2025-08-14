@@ -81,7 +81,7 @@ export default function ImageViewer({ src, alt, onClose, className, ...props }: 
       {/* Image container with zoom/pan */}
       <div
         ref={containerRef}
-        className="relative w-full h-full overflow-hidden bg-black cursor-grab select-none"
+        className="relative w-full h-full overflow-hidden bg-background/20 dark:bg-black/30 backdrop-blur-sm rounded-lg cursor-grab select-none border border-border/50"
         onMouseDown={onMouseDown}
         onMouseMove={onMouseMove}
         onMouseUp={onMouseUp}
@@ -101,34 +101,34 @@ export default function ImageViewer({ src, alt, onClose, className, ...props }: 
       </div>
 
       {/* Controls - bottom center */}
-      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2">
+      <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-card/90 backdrop-blur-sm px-3 py-2 rounded-full border border-border/50 shadow-lg">
         <button
           onClick={handleZoomIn}
-          className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary/80 text-primary-foreground shadow hover:bg-primary transition-colors"
+          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/90 text-primary-foreground shadow-sm hover:bg-primary transition-all duration-150 hover:scale-110"
           title="Zoom In"
         >
-          <ZoomIn className="w-5 h-5" />
+          <ZoomIn className="w-4 h-4" />
         </button>
         <button
           onClick={handleZoomOut}
-          className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary/80 text-primary-foreground shadow hover:bg-primary transition-colors"
+          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
           title="Zoom Out"
         >
-          <ZoomOut className="w-5 h-5" />
+          <ZoomOut className="w-4 h-4" />
         </button>
         <button
           onClick={handleReset}
-          className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary/80 text-primary-foreground shadow hover:bg-primary transition-colors"
+          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
           title="Reset"
         >
-          <RotateCcw className="w-5 h-5" />
+          <RotateCcw className="w-4 h-4" />
         </button>
         <button
           onClick={handleDownload}
-          className="inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary/80 text-primary-foreground shadow hover:bg-primary transition-colors"
+          className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
           title="Download"
         >
-          <Download className="w-5 h-5" />
+          <Download className="w-4 h-4" />
         </button>
       </div>
     </div>

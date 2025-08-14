@@ -491,7 +491,7 @@ The final post should be polished and require little to no editing before publis
 
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="fixed inset-0 z-50 bg-background/30 dark:bg-black/30 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-background dark:bg-zinc-900 rounded-lg shadow-lg max-w-2xl w-full p-0 relative flex flex-col border border-border h-[90vh] max-h-[800px]">
         <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-2 font-semibold text-lg">

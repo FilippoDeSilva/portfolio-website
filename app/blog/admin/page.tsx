@@ -23,6 +23,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Download, Eye, EyeOff, LogOut, Sparkles, X } from "lucide-react";
 import ImageViewer from "@/components/ui/image-viewer";
 import NativeVideoPlayer from "@/components/ui/native-video-player";
+import NativeAudioPlayer from "@/components/ui/native-audio-player";
 import PlyrPlayer from "@/components/ui/plyr-player";
 import { Plus, Trash2, Upload, Check, RefreshCw, Paperclip, Send } from "lucide-react";
 import AIChatModal from "@/components/ui/ai-chat-modal";
@@ -209,7 +210,7 @@ export default function BlogAdmin() {
 
   const POSTS_PER_PAGE = 4;
   const [currentPage, setCurrentPage] = useState(1);
-  const [lightbox, setLightbox] = useState<{ open: boolean; src: string; name?: string; type?: string } | null>(null);
+  const [lightbox, setLightbox] = useState<{ open: boolean; src: string; name?: string; type?: string; thumb?: string } | null>(null);
   const [isPIPActive, setIsPIPActive] = useState(false);
 
   useEffect(() => {
@@ -353,7 +354,43 @@ export default function BlogAdmin() {
         if (data) {
           const url = supabase.storage.from('blog-attachments').getPublicUrl(path).data.publicUrl;
           console.log('[Attachment Upload] success', { index: i, url });
-          uploaded.push({ url, name: file.name, type: file.type, ext });
+          
+          let attachmentData = { url, name: file.name, type: file.type, ext };
+          
+          // If it's an audio file, try to extract thumbnail
+          if (file.type.startsWith('audio/')) {
+            try {
+              setAttachmentUploadStatus(`Extracting thumbnail for: ${file.name}`);
+              const thumbnailResponse = await fetch('/api/extract-music-thumbnail', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                  audioUrl: url, 
+                  audioName: file.name 
+                }),
+              });
+              
+              if (thumbnailResponse.ok) {
+                const thumbnailData = await thumbnailResponse.json();
+                if (thumbnailData.success) {
+                  // Add thumbnail and metadata to attachment
+                  attachmentData = {
+                    ...attachmentData,
+                    thumbnail: thumbnailData.thumbnail.url,
+                    metadata: thumbnailData.metadata
+                  };
+                  console.log('[Thumbnail Extraction] success', thumbnailData);
+                } else {
+                  console.log('[Thumbnail Extraction] no artwork found for', file.name);
+                }
+              }
+            } catch (thumbnailError) {
+              console.warn('[Thumbnail Extraction] failed for', file.name, ':', thumbnailError);
+              // Continue without thumbnail - not a critical error
+            }
+          }
+          
+          uploaded.push(attachmentData);
         }
       }
       if (uploaded.length > 0) {
@@ -461,25 +498,13 @@ export default function BlogAdmin() {
             lightbox.type?.startsWith('video')
               ? isPIPActive
                 ? 'bg-transparent opacity-0 pointer-events-none'
-                : 'bg-black/70 opacity-100'
-              : 'bg-black/70 opacity-100'
+                : 'bg-background/30 dark:bg-black/30 backdrop-blur-sm opacity-100'
+              : 'bg-background/30 dark:bg-black/30 backdrop-blur-sm opacity-100'
           }`}
         >
           <div className="relative w-full max-w-5xl">
             {lightbox.type?.startsWith('video') ? (
-              																																																																																																										
-              																																																																
-              																										
-              																		
-              										
-              										
-              										
-              										
-              										
-              										
-              										
-              										
-              			<NativeVideoPlayer
+              <NativeVideoPlayer
                 src={lightbox.src}
                 name={lightbox.name}
                 className={isPIPActive ? "absolute -left-[9999px] w-[1px] h-[1px] opacity-0 pointer-events-none" : "w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden"}
@@ -491,6 +516,22 @@ export default function BlogAdmin() {
                   setIsPIPActive(isActive);
                 }}
               />
+            ) : lightbox.type?.startsWith('audio') ? (
+              <div className="relative w-full max-w-2xl mx-auto">
+                <button
+                  aria-label="Close"
+                  className="absolute top-3 right-3 z-10 text-white/80 hover:text-white bg-black/20 rounded-full p-2 backdrop-blur-sm"
+                  onClick={() => setLightbox(null)}
+                >
+                  <X className="w-6 h-6" />
+                </button>
+                <NativeAudioPlayer 
+                  src={lightbox.src} 
+                  name={lightbox.name} 
+                  className="w-full"
+                  thumbnail={lightbox.thumb}
+                />
+              </div>
             ) : (
               <ImageViewer
                 src={lightbox.src}
@@ -738,6 +779,40 @@ export default function BlogAdmin() {
                               setLightbox({ open: true, src: att.url, name: att.name, type: 'image' });
                             } else if (att?.type?.startsWith?.('video')) {
                               setLightbox({ open: true, src: att.url, name: att.name, type: 'video' });
+                            } else if (att?.type?.startsWith?.('audio')) {
+                              console.log('[AUDIO PREVIEW DEBUG] Audio attachment:', att);
+                              
+                              // Check if the attachment has an extracted thumbnail
+                              let thumb = att.thumbnail;
+                              console.log('[AUDIO PREVIEW DEBUG] Direct thumbnail from attachment:', thumb);
+                              
+                              // If no direct thumbnail, try to find matching image attachment by filename
+                              if (!thumb) {
+                                console.log('[AUDIO PREVIEW DEBUG] No direct thumbnail, searching for matching image...');
+                                const getBase = (s?: string) => {
+                                  if (!s) return '';
+                                  try {
+                                    const u = new URL(s, s.startsWith('http') ? undefined : 'http://local');
+                                    s = u.pathname;
+                                  } catch {}
+                                  const last = s.split('/').pop() || s;
+                                  return (last.includes('.') ? last.substring(0, last.lastIndexOf('.')) : last).toLowerCase();
+                                };
+                                const base = getBase(att.name || att.url);
+                                console.log('[AUDIO PREVIEW DEBUG] Audio base name:', base);
+                                const img = (form.attachments || []).find((x: any) => {
+                                  const isImage = x?.type?.startsWith?.('image');
+                                  const matchesBase = getBase(x.name || x.url) === base;
+                                  console.log('[AUDIO PREVIEW DEBUG] Checking attachment:', { name: x.name, type: x.type, isImage, matchesBase, base: getBase(x.name || x.url) });
+                                  return isImage && matchesBase;
+                                });
+                                thumb = img?.url;
+                                console.log('[AUDIO PREVIEW DEBUG] Found matching image:', img?.url);
+                              }
+                              
+                              // DO NOT fallback to cover image - let the audio player handle its own fallback
+                              console.log('[AUDIO PREVIEW DEBUG] Final thumbnail to pass:', thumb);
+                              setLightbox({ open: true, src: att.url, name: att.name, type: 'audio', thumb });
                             } else {
                               window.open(att.url, '_blank');
                             }

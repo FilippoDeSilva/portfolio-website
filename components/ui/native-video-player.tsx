@@ -305,7 +305,7 @@ onClick={togglePlay}
               <button
                 type="button"
                 onClick={togglePlay}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-white/10 hover:bg-white/20 text-white"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-blue-600/90 hover:bg-blue-600 text-white transition-all duration-150 hover:scale-105"
                 aria-label={isPlaying ? "Pause" : "Play"}
               >
                 {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
@@ -315,7 +315,7 @@ onClick={togglePlay}
               <button
                 type="button"
                 onClick={toggleMute}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-white/10 hover:bg-white/20 text-white"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-gray-700/80 hover:bg-gray-600 text-white transition-all duration-150 hover:scale-105"
                 aria-label={muted ? "Unmute" : "Mute"}
               >
                 {muted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
@@ -337,7 +337,7 @@ onClick={togglePlay}
               <button
                 type="button"
                 onClick={() => onSeek(0)}
-                className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-md bg-white/10 hover:bg-white/20 text-white"
+                className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-md bg-gray-700/70 hover:bg-gray-600 text-white transition-all duration-150 hover:scale-105"
                 aria-label="Restart"
                 title="Restart"
               >
@@ -351,7 +351,7 @@ onClick={togglePlay}
                 type="button"
                 onClick={toggleSubtitles}
                 disabled={!hasSubtitles}
-                className={`inline-flex items-center justify-center w-9 h-9 rounded-md ${hasSubtitles ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-white/5 text-white/40 cursor-not-allowed'}`}
+                className={`inline-flex items-center justify-center w-9 h-9 rounded-md transition-all duration-150 hover:scale-105 ${hasSubtitles ? 'bg-secondary/70 hover:bg-secondary text-secondary-foreground' : 'bg-muted/30 text-muted-foreground cursor-not-allowed'}`}
                 aria-label={subsOn ? "Hide Subtitles" : "Show Subtitles"}
                 title={subsOn ? "Hide Subtitles" : hasSubtitles ? "Show Subtitles" : "No Subtitles"}
               >
@@ -359,12 +359,11 @@ onClick={togglePlay}
               </button>
 
               {/* PIP */}
-              {/* PIP */}
               {supportsPip && (
                 <button
                   type="button"
                   onClick={requestPip}
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-white/10 hover:bg-white/20 text-white"
+                  className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-secondary/70 hover:bg-secondary text-secondary-foreground transition-all duration-150 hover:scale-105"
                   aria-label="Picture in Picture"
                   title="Picture in Picture"
                 >
@@ -376,7 +375,7 @@ onClick={togglePlay}
               <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-white/10 hover:bg-white/20 text-white"
+                className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-secondary/70 hover:bg-secondary text-secondary-foreground transition-all duration-150 hover:scale-105"
                 aria-label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                 title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
               >

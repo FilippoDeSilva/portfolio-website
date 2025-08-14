@@ -172,7 +172,7 @@ export default function TitleBar({ title, children }: { title: string; children?
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-              className="fixed inset-0 top-16 z-40 bg-black/40 md:hidden"
+              className="fixed inset-0 top-16 z-40 bg-background/30 dark:bg-black/30 backdrop-blur-sm md:hidden"
               aria-hidden="true"
               onClick={() => setIsMobileMenuOpen(false)}
             />
