@@ -10,7 +10,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { BlogList } from "@/components/blog-list";
 import Image from "next/image";
-import ImageLightbox from "@/components/ui/image-lightbox";
+import ImageViewer from "@/components/ui/image-viewer";
 import dynamic from "next/dynamic";
 const PlyrPlayer = dynamic(() => import("@/components/ui/plyr-player"), { ssr: false });
 
@@ -115,8 +115,10 @@ export default function BlogDetailPage() {
   return (
   <>
       {lightbox?.open && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70">
-          <ImageLightbox open={lightbox.open} src={lightbox.src} name={lightbox.name} onClose={() => setLightbox(null)} />
+        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+          <div className="relative w-full max-w-5xl">
+            <ImageViewer src={lightbox.src} alt={lightbox.name} className="w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden" onClose={() => setLightbox(null)} />
+          </div>
         </div>
       )}
       {playing && (
