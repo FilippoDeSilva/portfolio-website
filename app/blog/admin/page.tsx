@@ -518,18 +518,12 @@ export default function BlogAdmin() {
               />
             ) : lightbox.type?.startsWith('audio') ? (
               <div className="relative w-full max-w-2xl mx-auto">
-                <button
-                  aria-label="Close"
-                  className="absolute top-3 right-3 z-10 text-white/80 hover:text-white bg-black/20 rounded-full p-2 backdrop-blur-sm"
-                  onClick={() => setLightbox(null)}
-                >
-                  <X className="w-6 h-6" />
-                </button>
                 <NativeAudioPlayer 
                   src={lightbox.src} 
                   name={lightbox.name} 
                   className="w-full"
                   thumbnail={lightbox.thumb}
+                  onClose={() => setLightbox(null)}
                 />
               </div>
             ) : (

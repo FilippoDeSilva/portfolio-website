@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Play, Pause, Volume2, VolumeX, RotateCcw, Download } from "lucide-react";
+import { Play, Pause, Volume2, VolumeX, RotateCcw, Download, X } from "lucide-react";
 
 export interface NativeAudioPlayerProps {
   src: string;
@@ -14,7 +14,7 @@ export interface NativeAudioPlayerProps {
   title?: string;
 }
 
-export default function NativeAudioPlayer({ src, name, className, thumbnail, artist, album, title }: NativeAudioPlayerProps) {
+export default function NativeAudioPlayer({ src, name, className, onClose, thumbnail, artist, album, title }: NativeAudioPlayerProps) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
@@ -128,6 +128,22 @@ export default function NativeAudioPlayer({ src, name, className, thumbnail, art
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
+      {/* Close button - top right corner */}
+      {onClose && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onClose();
+          }}
+          className="absolute top-2 right-2 z-50 inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary text-primary-foreground shadow hover:opacity-90"
+          aria-label="Close"
+          title="Close"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      )}
+
       {/* Album Art and Track Info */}
       {(thumbnail || title || artist || album) && (
         <div className="flex items-center gap-4 mb-4">
