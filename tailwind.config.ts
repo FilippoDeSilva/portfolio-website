@@ -68,10 +68,20 @@ const config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        shine: {
+                    '0%': { 'background-position': '100%' },
+                    '100%': { 'background-position': '-100%' },
+                  },
+        sheen: {
+          '0%': { 'background-position': '120% 0' },
+          '100%': { 'background-position': '-20% 0' },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        shine: 'shine 5s linear infinite',
+        sheen: 'sheen 7s ease-in-out',
       },
     },
   },

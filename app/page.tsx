@@ -3,16 +3,15 @@
 import { useRef, useEffect, useState } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
+
 import {
-  ArrowRight,
+
   Github,
   Linkedin,
-  Menu,
+
   MousePointer,
-  MoveUp,
+
   Send,
-  Twitter,
-  User,
   Code,
   Server,
   Database,
@@ -20,13 +19,13 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { ProjectCard } from "@/components/project-card";
 import { SkillCard } from "@/components/skill-card";
 import { ContactForm } from "@/components/contact-form";
 import { useUserLocationInfo } from "@/components/userLocationInfo";
 import TitleBar from "@/components/titlebar";
-
+import TextType from '@/components/ui/text-type';
+import ShinyText from '@/components/ui/shiny-text';
 export default function Home() {
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
@@ -235,48 +234,63 @@ export default function Home() {
               viewport={{ once: true, margin: "-100px" }}
               className="grid gap-12 lg:grid-cols-2 lg:gap-16 items-center"
             >
-              <div className="relative order-2 lg:order-1">
-                <div className="absolute -inset-4 rounded-xl bg-primary/5 blur-lg"></div>
-                <div className="relative aspect-square overflow-hidden rounded-xl border border-border/50 bg-muted/20">
-                  <Image
-                    src="https://cdn.pixabay.com/photo/2024/04/09/03/04/ai-generated-8684869_1280.jpg"
-                    alt="Profile"
-                    fill
-                    priority
-                  />
-                </div>
-              </div>
+               <div className="relative order-2 lg:order-1 hidden lg:block">
+                 <div className="absolute -inset-4 rounded-xl bg-primary/5 blur-lg"></div>
+                 <div className="relative w-full h-[50px] md:h-[420px] lg:h-[520px] overflow-hidden rounded-xl border border-border/50 bg-muted/20">
+                   <Image
+                     src="https://cdn.pixabay.com/photo/2024/04/09/03/04/ai-generated-8684869_1280.jpg"
+                     alt="Fullstack Developer"
+                     fill
+                     className="object-cover"
+                     priority
+                   />
+                 </div>
+               </div>
 
               <div className="order-1 lg:order-2">
                 <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm text-primary mb-6">
                   About Me
                 </div>
-                <h2 className="text-3xl font-bold tracking-tight sm:text-4xl mb-6">
-                  Designing with purpose and precision
-                </h2>
-                <div className="space-y-4 text-muted-foreground">
-                  <p>
-                    I'm a Fullstack Developer, creating user-centered
-                    digital products for clients. As a Fullstack Developer I've
-                    done some hobby projects ranging from school management
-                    systems to automation scripts and my Computer Science 
-                    background shaped how I approach problems and find optimal
-                    solutions. My approach combines strategic thinking with 
-                    meticulous execution.
-                  </p>
-                  <p>
-                    My design process starts with researching users' needs.
-                    Then, I create logical information architecture and design
-                    interfaces that are not only functional but also attractive,
-                    delivering seamless digital experiences from front-end to
-                    back-end.
-                  </p>
-                </div>
+ {/* TextType Section - Positioned below About Me */}
+ <section className="bg-muted/20">
+          <div className="container">
+            <div className="text-left">
+              <TextType 
+                className="-ml-5 text-base font-bold tracking-tight sm:text-2xl mb-4"
+                text={["Designing with purpose and precision"]}
+                typingSpeed={100}
+                pauseDuration={1500}
+                startOnVisible={true}
+                showCursor={true}
+                cursorCharacter=""
+              />
+            </div>
+          </div>
+        </section>                
+                                 {/* Vertical Line with Static Text */}
+                 <div className="relative">
+                   {/* Vertical Line */}
+                   <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-primary/20 via-primary/40 to-primary/20 shadow-[0_0_10px_rgba(var(--primary),0.3)] animate-pulse"></div>
+                   
+                   {/* Static Text */}
+                   <div className="pl-6 space-y-4 text-muted-foreground">
+                     <p>
+                       I'm a Fullstack Developer creating user-centered
+                       digital products. My Computer Science background
+                       shapes how I approach problems and find optimal
+                       solutions through strategic thinking and meticulous execution.
+                     </p>
+                     <p>
+                       My design process starts with researching users' needs,
+                       then creating logical information architecture and
+                       designing interfaces that are both functional and
+                       attractive, delivering seamless digital experiences.
+                     </p>
+                   </div>
+                 </div>
 
-                <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                  <Button asChild>
-                    <Link href="#contact">Get In Touch</Link>
-                  </Button>
+                <div className="mt-12 ml-6 flex flex-col sm:flex-row gap-4">
+                  <Button><Link href="#contact"><ShinyText text="Get In Touch" disabled={false} speed={2} className='custom-class' /></Link></Button>
                   <Button
                     variant="outline"
                     onClick={() => {
