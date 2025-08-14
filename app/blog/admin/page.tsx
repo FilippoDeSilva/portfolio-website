@@ -22,7 +22,7 @@ import { BlogCard } from "@/components/blog-card";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Download, Eye, EyeOff, LogOut, Sparkles, X } from "lucide-react";
 import ImageViewer from "@/components/ui/image-viewer";
-import VideoViewer from "@/components/ui/video-viewer";
+import PlyrPlayer from "@/components/ui/plyr-player";
 import { Plus, Trash2, Upload, Check, RefreshCw, Paperclip, Send } from "lucide-react";
 import AIChatModal from "@/components/ui/ai-chat-modal";
 import Link from "next/link";
@@ -209,6 +209,7 @@ export default function BlogAdmin() {
   const POSTS_PER_PAGE = 4;
   const [currentPage, setCurrentPage] = useState(1);
   const [lightbox, setLightbox] = useState<{ open: boolean; src: string; name?: string; type?: string } | null>(null);
+  const [isPIPActive, setIsPIPActive] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -454,14 +455,29 @@ export default function BlogAdmin() {
   return (
     <div className="p-4 sm:p-6 lg:p-8 bg-background text-foreground min-h-screen">
       {lightbox?.open && lightbox?.src && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+        <div
+          className={`fixed inset-0 z-50 grid place-items-center p-4 transition-opacity duration-200 ${
+            lightbox.type?.startsWith('video')
+              ? isPIPActive
+                ? 'bg-transparent opacity-0 pointer-events-none'
+                : 'bg-black/70 opacity-100'
+              : 'bg-black/70 opacity-100'
+          }`}
+        >
           <div className="relative w-full max-w-5xl">
             {lightbox.type?.startsWith('video') ? (
-              <VideoViewer
+              <PlyrPlayer
                 src={lightbox.src}
                 name={lightbox.name}
-                className="w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden"
-                onClose={() => setLightbox(null)}
+                className={isPIPActive ? "absolute -left-[9999px] w-[1px] h-[1px] opacity-0 pointer-events-none" : "w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden"}
+                onClose={() => {
+                  setLightbox(null);
+                  setIsPIPActive(false);
+                }}
+                onPIPChange={(isActive) => {
+                  // Toggle overlay visibility without unmounting the player
+                  setIsPIPActive(isActive);
+                }}
               />
             ) : (
               <ImageViewer

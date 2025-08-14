@@ -22,6 +22,7 @@ export default function BlogDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [lightbox, setLightbox] = useState<{ open: boolean; src: string; name?: string } | null>(null);
   const [playing, setPlaying] = useState<{ src: string; name?: string } | null>(null);
+  const [isPIPActive, setIsPIPActive] = useState(false);
 
   useEffect(() => {
     async function fetchPost() {
@@ -118,15 +119,6 @@ export default function BlogDetailPage() {
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
           <div className="relative w-full max-w-5xl">
             <ImageViewer src={lightbox.src} alt={lightbox.name} className="w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden" onClose={() => setLightbox(null)} />
-          </div>
-        </div>
-      )}
-      {playing && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
-          <div className="relative w-full max-w-5xl">
-            <div className="rounded-xl overflow-hidden bg-black">
-              <PlyrPlayer src={playing.src} className="w-full h-[60vh] sm:h-[70vh]" onClose={() => setPlaying(null)} />
-            </div>
           </div>
         </div>
       )}
@@ -367,15 +359,26 @@ export default function BlogDetailPage() {
         </div>
       </div>
       
-      {/* Video Overlay */}
+      {/* Video Overlay - keep player mounted; make overlay invisible in PIP */}
       {playing?.src && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/70 p-4">
+        <div
+          className={`fixed inset-0 z-50 grid place-items-center p-4 transition-opacity duration-200 ${
+            isPIPActive ? 'bg-transparent opacity-0 pointer-events-none' : 'bg-black/70 opacity-100'
+          }`}
+        >
           <div className="relative w-full max-w-5xl">
             <PlyrPlayer 
               src={playing.src} 
               name={playing.name}
-              className="w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden" 
-              onClose={() => setPlaying(null)} 
+              className={isPIPActive ? "absolute -left-[9999px] w-[1px] h-[1px] opacity-0 pointer-events-none" : "w-full h-[60vh] sm:h-[70vh] rounded-xl overflow-hidden"} 
+              onClose={() => {
+                setPlaying(null);
+                setIsPIPActive(false);
+              }}
+              onPIPChange={(isActive) => {
+                // Toggle overlay visibility without unmounting the player
+                setIsPIPActive(isActive);
+              }}
             />
           </div>
         </div>
