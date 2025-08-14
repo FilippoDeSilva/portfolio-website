@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState, useMemo, useCallback } from "react";
-import { X, Play, Pause, Volume2, VolumeX, PictureInPicture2, Maximize, Minimize2, RotateCcw, Subtitles } from "lucide-react";
+import { X, Play, Pause, Volume2, VolumeX, PictureInPicture2, Maximize, Minimize2, RotateCcw, Subtitles, Download } from "lucide-react";
 
 export interface NativeVideoPlayerProps {
   src: string;
@@ -298,27 +298,29 @@ onClick={togglePlay}
             </div>
           </div>
 
-          {/* Buttons Row */}
-          <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-2 sm:gap-3">
+          {/* Controls - centered with image viewer styling */}
+          <div className="flex items-center justify-center">
+            <div className="flex items-center gap-2 bg-card/90 backdrop-blur-sm px-3 py-2 rounded-full border border-border/50 shadow-lg">
               {/* Play/Pause */}
               <button
                 type="button"
                 onClick={togglePlay}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-blue-600/90 hover:bg-blue-600 text-white transition-all duration-150 hover:scale-105"
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/90 text-primary-foreground shadow-sm hover:bg-primary transition-all duration-150 hover:scale-110"
                 aria-label={isPlaying ? "Pause" : "Play"}
+                title={isPlaying ? "Pause" : "Play"}
               >
-                {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
               </button>
 
               {/* Mute */}
               <button
                 type="button"
                 onClick={toggleMute}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-gray-700/80 hover:bg-gray-600 text-white transition-all duration-150 hover:scale-105"
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
                 aria-label={muted ? "Unmute" : "Mute"}
+                title={muted ? "Unmute" : "Mute"}
               >
-                {muted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+                {muted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
               </button>
 
               {/* Volume Slider */}
@@ -329,7 +331,7 @@ onClick={togglePlay}
                 step={0.01}
                 value={muted ? 0 : volume}
                 onChange={(e) => onChangeVolume(Number(e.target.value))}
-                className="w-24 sm:w-32 accent-primary cursor-pointer"
+                className="w-20 sm:w-24 accent-primary cursor-pointer"
                 aria-label="Volume"
               />
 
@@ -337,25 +339,29 @@ onClick={togglePlay}
               <button
                 type="button"
                 onClick={() => onSeek(0)}
-                className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-md bg-gray-700/70 hover:bg-gray-600 text-white transition-all duration-150 hover:scale-105"
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
                 aria-label="Restart"
                 title="Restart"
               >
-                <RotateCcw className="w-5 h-5" />
+                <RotateCcw className="w-4 h-4" />
               </button>
-            </div>
 
-            <div className="flex items-center gap-2 sm:gap-3">
               {/* Subtitles */}
               <button
                 type="button"
                 onClick={toggleSubtitles}
                 disabled={!hasSubtitles}
-                className={`inline-flex items-center justify-center w-9 h-9 rounded-md transition-all duration-150 hover:scale-105 ${hasSubtitles ? 'bg-secondary/70 hover:bg-secondary text-secondary-foreground' : 'bg-muted/30 text-muted-foreground cursor-not-allowed'}`}
+                className={`inline-flex items-center justify-center w-8 h-8 rounded-full shadow-sm transition-all duration-150 hover:scale-110 ${
+                  hasSubtitles 
+                    ? subsOn 
+                      ? 'bg-primary/90 text-primary-foreground hover:bg-primary' 
+                      : 'bg-secondary/80 text-secondary-foreground hover:bg-secondary'
+                    : 'bg-muted/30 text-muted-foreground cursor-not-allowed opacity-50'
+                }`}
                 aria-label={subsOn ? "Hide Subtitles" : "Show Subtitles"}
                 title={subsOn ? "Hide Subtitles" : hasSubtitles ? "Show Subtitles" : "No Subtitles"}
               >
-                <Subtitles className="w-5 h-5" />
+                <Subtitles className="w-4 h-4" />
               </button>
 
               {/* PIP */}
@@ -363,23 +369,34 @@ onClick={togglePlay}
                 <button
                   type="button"
                   onClick={requestPip}
-                  className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-secondary/70 hover:bg-secondary text-secondary-foreground transition-all duration-150 hover:scale-105"
+                  className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
                   aria-label="Picture in Picture"
                   title="Picture in Picture"
                 >
-                  <PictureInPicture2 className="w-5 h-5" />
+                  <PictureInPicture2 className="w-4 h-4" />
                 </button>
               )}
+
+              {/* Download */}
+              <a
+                href={src}
+                download
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
+                title="Download"
+                aria-label="Download"
+              >
+                <Download className="w-4 h-4" />
+              </a>
 
               {/* Fullscreen */}
               <button
                 type="button"
                 onClick={toggleFullscreen}
-                className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-secondary/70 hover:bg-secondary text-secondary-foreground transition-all duration-150 hover:scale-105"
+                className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
                 aria-label={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
                 title={isFullscreen ? "Exit Fullscreen" : "Fullscreen"}
               >
-                {isFullscreen ? <Minimize2 className="w-5 h-5" /> : <Maximize className="w-5 h-5" />}
+                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize className="w-4 h-4" />}
               </button>
             </div>
           </div>

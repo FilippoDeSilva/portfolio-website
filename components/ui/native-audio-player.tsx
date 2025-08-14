@@ -202,26 +202,26 @@ export default function NativeAudioPlayer({ src, name, className, thumbnail, art
       </div>
 
       {/* Controls Row */}
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2 sm:gap-3">
+      <div className="flex items-center justify-center">
+        <div className="flex items-center gap-2 bg-card/90 backdrop-blur-sm px-3 py-2 rounded-full border border-border/50 shadow-lg">
           <button
             type="button"
             onClick={togglePlay}
-            className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-primary text-primary-foreground hover:opacity-90"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/90 text-primary-foreground shadow-sm hover:bg-primary transition-all duration-150 hover:scale-110"
             aria-label={isPlaying ? "Pause" : "Play"}
             title={isPlaying ? "Pause" : "Play"}
           >
-            {isPlaying ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
           </button>
 
           <button
             type="button"
             onClick={toggleMute}
-            className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-secondary/60 hover:bg-secondary/80 text-foreground transition-all duration-150 hover:scale-105"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
             aria-label={muted ? "Unmute" : "Mute"}
             title={muted ? "Unmute" : "Mute"}
           >
-            {muted || volume === 0 ? <VolumeX className="w-5 h-5" /> : <Volume2 className="w-5 h-5" />}
+            {muted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
           </button>
 
           <input
@@ -238,23 +238,21 @@ export default function NativeAudioPlayer({ src, name, className, thumbnail, art
           <button
             type="button"
             onClick={() => onSeek(0)}
-            className="hidden sm:inline-flex items-center justify-center w-9 h-9 rounded-md bg-secondary/60 hover:bg-secondary/80 text-foreground transition-all duration-150 hover:scale-105"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
             title="Restart"
             aria-label="Restart"
           >
-            <RotateCcw className="w-5 h-5" />
+            <RotateCcw className="w-4 h-4" />
           </button>
-        </div>
 
-        <div className="flex items-center gap-2 sm:gap-3">
           <a
             href={src}
             download
-            className="inline-flex items-center justify-center w-9 h-9 rounded-md bg-secondary/60 hover:bg-secondary/80 text-foreground transition-all duration-150 hover:scale-105"
+            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
             title="Download"
             aria-label="Download"
           >
-            <Download className="w-5 h-5" />
+            <Download className="w-4 h-4" />
           </a>
         </div>
       </div>
