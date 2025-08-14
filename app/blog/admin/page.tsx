@@ -213,6 +213,39 @@ export default function BlogAdmin() {
   const [lightbox, setLightbox] = useState<{ open: boolean; src: string; name?: string; type?: string; thumb?: string } | null>(null);
   const [isPIPActive, setIsPIPActive] = useState(false);
 
+  // Scroll lock effect for modals
+  useEffect(() => {
+    const isModalOpen = lightbox?.open || deleteModal.open || aiModalOpen;
+    
+    if (isModalOpen) {
+      // Lock scroll
+      document.body.style.overflow = 'hidden';
+      
+      // Prevent wheel scrolling on the entire page (except for image zoom)
+      const preventScroll = (e: WheelEvent) => {
+        // Allow zooming if we're in an image viewer container
+        const target = e.target as Element;
+        const isImageViewer = target?.closest('[data-image-viewer]');
+        
+        if (!isImageViewer) {
+          e.preventDefault();
+        }
+      };
+      
+      // Add global wheel event listener
+      window.addEventListener('wheel', preventScroll, { passive: false });
+      
+      // Cleanup function
+      return () => {
+        document.body.style.overflow = 'unset';
+        window.removeEventListener('wheel', preventScroll);
+      };
+    } else {
+      // Restore scroll
+      document.body.style.overflow = 'unset';
+    }
+  }, [lightbox?.open, deleteModal.open, aiModalOpen]);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && session.user) {

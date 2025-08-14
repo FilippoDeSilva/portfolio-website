@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { X, ZoomIn, ZoomOut, RotateCcw, Download } from "lucide-react";
 
 export interface ImageViewerProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -60,8 +60,37 @@ export default function ImageViewer({ src, alt, onClose, className, ...props }: 
     setIsDragging(false);
   }, []);
 
+  // Mouse wheel zoom functionality
+  const handleWheel = useCallback((e: WheelEvent) => {
+    e.preventDefault();
+    const delta = e.deltaY;
+    const zoomFactor = 1.1;
+    
+    if (delta < 0) {
+      // Scroll up = zoom in
+      setScale(prev => Math.min(prev * zoomFactor, 5));
+    } else {
+      // Scroll down = zoom out
+      setScale(prev => Math.max(prev / zoomFactor, 0.1));
+    }
+  }, []);
+
+  // Add wheel event listener for zoom (scroll lock is handled by parent modal)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    // Add wheel event listener for zoom
+    container.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      // Remove wheel event listener
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, [handleWheel]);
+
   return (
-    <div className={`relative ${className || ""}`} {...props}>
+    <div className={`relative ${className || ""}`} data-image-viewer {...props}>
       {/* Close button - top right corner */}
       {onClose && (
         <button
