@@ -567,7 +567,7 @@ export default function BlogAdmin() {
                 }}
               />
             ) : lightbox.type?.startsWith('audio') ? (
-              <div className="relative w-full max-w-2xl mx-auto -ml-[1.5%]">
+              <div className="relative w-full max-w-2xl mx-auto">
                 <NativeAudioPlayer 
                   src={lightbox.src} 
                   name={lightbox.name} 
