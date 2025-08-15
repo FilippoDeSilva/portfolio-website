@@ -147,6 +147,7 @@ function TiptapMenuBar({ editor }: { editor: any }) {
 
 export default function BlogAdmin() {
   const [user, setUser] = useState<{ email: string } | null>(null);
+  const [authLoading, setAuthLoading] = useState(true); // Add loading state for authentication
   const [posts, setPosts] = useState<any[]>([]);
   const [form, setForm] = useState<{
     title: string;
@@ -175,6 +176,7 @@ export default function BlogAdmin() {
   const [deleting, setDeleting] = useState(false);
   const [aiModalOpen, setAIModalOpen] = useState(false);
   const [postsLoading, setPostsLoading] = useState(false);
+  const [postsInitialized, setPostsInitialized] = useState(false);
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -246,28 +248,44 @@ export default function BlogAdmin() {
   }, [lightbox?.open, deleteModal.open, aiModalOpen]);
 
   useEffect(() => {
+    // Check initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session && session.user) {
         setUser({ email: session.user.email || '' });
       } else {
         setUser(null);
       }
+      // Set loading to false after initial auth check completes
+      setAuthLoading(false);
     });
+    
+    // Listen for auth state changes
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session && session.user) {
         setUser({ email: session.user.email || '' });
       } else {
         setUser(null);
       }
+      // Ensure loading is false on any auth state change
+      setAuthLoading(false);
     });
+    
     return () => {
       listener?.subscription.unsubscribe();
     };
   }, []);
 
   useEffect(() => {
-    if (user) fetchPosts();
-  }, [user]);
+    // Only fetch posts once when user becomes available for the first time
+    if (user && !postsInitialized) {
+      fetchPosts();
+      setPostsInitialized(true);
+    } else if (!user) {
+      // Reset posts when user logs out
+      setPosts([]);
+      setPostsInitialized(false);
+    }
+  }, [user, postsInitialized]);
 
   // Only update editor content when editingId changes, not on every content change
   useEffect(() => {
@@ -581,7 +599,17 @@ export default function BlogAdmin() {
           </Button>
         )}
       </TitleBar>
-      {!user ? (
+      {authLoading ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="flex flex-col items-center gap-4">
+            <svg className="animate-spin h-8 w-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+            </svg>
+            <p className="text-sm text-muted-foreground">Checking authentication...</p>
+          </div>
+        </div>
+      ) : !user ? (
         <div className="flex items-center justify-center min-h-screen">
           <div className="w-full max-w-md rounded-2xl bg-gradient-to-br from-blue-50/80 via-background/90 to-blue-100/60 dark:from-blue-950/40 dark:via-background/80 dark:to-blue-900/30 shadow-xl border border-border p-8 flex flex-col gap-6">
             <div className="text-center">
