@@ -549,7 +549,7 @@ export default function BlogAdmin() {
                 }}
               />
             ) : lightbox.type?.startsWith('audio') ? (
-              <div className="relative w-full max-w-2xl mx-auto">
+              <div className="relative w-full max-w-2xl mx-auto -ml-[1.5%]">
                 <NativeAudioPlayer 
                   src={lightbox.src} 
                   name={lightbox.name} 
@@ -800,7 +800,7 @@ export default function BlogAdmin() {
                     {form.attachments && form.attachments.length > 0 && (
                         <AttachmentsGrid
                           attachments={form.attachments}
-                          onPreview={(att: { url: string; name?: string; type?: string; ext?: string }) => {
+                          onPreview={(att: { url: string; name?: string; type?: string; ext?: string; thumbnail?: string }) => {
                             if (att?.type?.startsWith?.('image')) {
                               setLightbox({ open: true, src: att.url, name: att.name, type: 'image' });
                             } else if (att?.type?.startsWith?.('video')) {

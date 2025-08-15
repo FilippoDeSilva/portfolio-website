@@ -124,7 +124,7 @@ export default function NativeAudioPlayer({ src, name, className, onClose, thumb
   return (
     <div
       ref={containerRef}
-      className={`relative w-full max-w-full bg-card/95 backdrop-blur-sm border border-border rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-200 ${className || ""}`}
+      className={`relative w-full max-w-full bg-card/95 backdrop-blur-sm border border-border rounded-xl p-3 sm:p-4 shadow-lg hover:shadow-xl transition-all duration-200 ${className || ""}`}
       tabIndex={0}
       onKeyDown={handleKeyDown}
     >
@@ -136,28 +136,28 @@ export default function NativeAudioPlayer({ src, name, className, onClose, thumb
             e.stopPropagation();
             onClose();
           }}
-          className="absolute top-2 right-2 z-50 inline-flex items-center justify-center w-9 h-9 rounded-full bg-primary text-primary-foreground shadow hover:opacity-90"
+          className="absolute top-1 right-1 sm:top-2 sm:right-2 z-50 inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 md:w-9 md:h-9 rounded-full bg-primary text-primary-foreground shadow hover:opacity-90"
           aria-label="Close"
           title="Close"
         >
-          <X className="w-5 h-5" />
+          <X className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
         </button>
       )}
 
       {/* Album Art and Track Info */}
       {(thumbnail || title || artist || album) && (
-        <div className="flex items-center gap-4 mb-4">
+        <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
           {thumbnail ? (
             <div className="flex-shrink-0">
               <img 
                 src={thumbnail} 
                 alt={`${title || name} album art`}
-                className="w-16 h-16 sm:w-20 sm:h-20 rounded-lg object-cover shadow-md"
+                className="w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-lg object-cover shadow-md"
               />
             </div>
           ) : (
-            <div className="flex-shrink-0 w-16 h-16 sm:w-20 sm:h-20 rounded-lg bg-muted/30 flex items-center justify-center">
-              <svg width="32" height="20" viewBox="0 0 64 40" aria-hidden="true" className="text-muted-foreground">
+            <div className="flex-shrink-0 w-14 h-14 sm:w-16 sm:h-16 md:w-20 md:h-20 rounded-lg bg-muted/30 flex items-center justify-center">
+              <svg width="28" height="18" viewBox="0 0 64 40" aria-hidden="true" className="text-muted-foreground sm:w-8 sm:h-5">
                 <rect x="8" y="10" width="8" height="20" fill="currentColor" opacity="0.8">
                   <animate attributeName="height" values="10;26;10" dur="1s" repeatCount="indefinite"/>
                   <animate attributeName="y" values="15;7;15" dur="1s" repeatCount="indefinite"/>
@@ -177,17 +177,17 @@ export default function NativeAudioPlayer({ src, name, className, onClose, thumb
               </svg>
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <div className="text-sm sm:text-base font-medium text-foreground truncate">
+          <div className="flex-1 min-w-0 pr-10 sm:pr-12">
+            <div className="text-xs sm:text-sm md:text-base font-medium text-foreground truncate">
               {title || name || 'Unknown Track'}
             </div>
             {artist && (
-              <div className="text-xs sm:text-sm text-muted-foreground truncate">
+              <div className="text-[10px] sm:text-xs md:text-sm text-muted-foreground truncate">
                 {artist}
               </div>
             )}
             {album && (
-              <div className="text-xs text-muted-foreground/80 truncate">
+              <div className="text-[9px] sm:text-xs md:text-sm text-muted-foreground/80 truncate">
                 {album}
               </div>
             )}
@@ -197,13 +197,13 @@ export default function NativeAudioPlayer({ src, name, className, onClose, thumb
       
       {/* Fallback for when no metadata is available */}
       {!thumbnail && !title && !artist && !album && name && (
-        <div className="mb-2 text-sm sm:text-base font-medium text-foreground truncate">{name}</div>
+        <div className="mb-2 pr-8 sm:pr-10 text-sm sm:text-base font-medium text-foreground truncate">{name}</div>
       )}
 
       <audio ref={audioRef} src={src} preload="metadata" className="hidden" />
 
       {/* Seek */}
-      <div className="flex items-center gap-3 mb-2">
+      <div className="flex items-center gap-2 sm:gap-3 mb-2">
         <input
           type="range"
           min={0}
@@ -212,32 +212,32 @@ export default function NativeAudioPlayer({ src, name, className, onClose, thumb
           onChange={(e) => onSeek(Number(e.target.value))}
           className="w-full accent-primary cursor-pointer"
         />
-        <div className="text-[10px] sm:text-xs text-muted-foreground w-[70px] text-right">
+        <div className="text-[9px] sm:text-xs text-muted-foreground w-[50px] sm:w-[70px] text-right whitespace-nowrap">
           {fmtTime(currentTime)} / {fmtTime(duration)}
         </div>
       </div>
 
       {/* Controls Row */}
       <div className="flex items-center justify-center">
-        <div className="flex items-center gap-2 bg-card/90 backdrop-blur-sm px-3 py-2 rounded-full border border-border/50 shadow-lg">
+        <div className="flex items-center gap-1.5 sm:gap-2 bg-card/90 backdrop-blur-sm px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-full border border-border/50 shadow-lg">
           <button
             type="button"
             onClick={togglePlay}
-            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-primary/90 text-primary-foreground shadow-sm hover:bg-primary transition-all duration-150 hover:scale-110"
+            className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-primary/90 text-primary-foreground shadow-sm hover:bg-primary transition-all duration-150 hover:scale-110"
             aria-label={isPlaying ? "Pause" : "Play"}
             title={isPlaying ? "Pause" : "Play"}
           >
-            {isPlaying ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            {isPlaying ? <Pause className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           </button>
 
           <button
             type="button"
             onClick={toggleMute}
-            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
+            className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
             aria-label={muted ? "Unmute" : "Mute"}
             title={muted ? "Unmute" : "Mute"}
           >
-            {muted || volume === 0 ? <VolumeX className="w-4 h-4" /> : <Volume2 className="w-4 h-4" />}
+            {muted || volume === 0 ? <VolumeX className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> : <Volume2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
           </button>
 
           <input
@@ -247,32 +247,31 @@ export default function NativeAudioPlayer({ src, name, className, onClose, thumb
             step={0.01}
             value={muted ? 0 : volume}
             onChange={(e) => onChangeVolume(Number(e.target.value))}
-            className="w-24 sm:w-32 accent-primary cursor-pointer"
+            className="w-20 sm:w-24 md:w-32 accent-primary cursor-pointer"
             aria-label="Volume"
           />
 
           <button
             type="button"
             onClick={() => onSeek(0)}
-            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
+            className="inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
             title="Restart"
             aria-label="Restart"
           >
-            <RotateCcw className="w-4 h-4" />
+            <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </button>
 
           <a
             href={src}
             download
-            className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
+            className="hidden xs:inline-flex items-center justify-center w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
             title="Download"
             aria-label="Download"
           >
-            <Download className="w-4 h-4" />
+            <Download className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
           </a>
         </div>
       </div>
     </div>
   );
 }
-
