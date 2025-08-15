@@ -1,5 +1,6 @@
 import React from "react";
 import Image from "next/image";
+import { Trash2 } from "lucide-react";
 import { BlogReactions } from "./blog-reactions";
 import { BlogComments } from "./blog-comments";
 import MediaModal from "./ui/media-modal";
@@ -85,7 +86,7 @@ export function BlogCard({
                 e.preventDefault();
                 onEdit();
               }}
-              className="p-1.5 rounded-full bg-background/80 dark:bg-zinc-900/80 border border-border shadow hover:bg-primary/10 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+              className="p-1.5 rounded-full bg-background/80 dark:bg-zinc-900/80 border border-border shadow hover:bg-blue-100 dark:hover:bg-blue-900 hover:text-primary focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
             >
               <svg
                 className="w-5 h-5"
@@ -113,19 +114,7 @@ export function BlogCard({
               }}
               className="p-1.5 rounded-full bg-background/80 dark:bg-zinc-900/80 border border-border shadow hover:bg-red-100 dark:hover:bg-red-900 hover:text-red-600 focus:outline-none focus:ring-2 focus:ring-red-400 transition"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
+              <Trash2 className="w-5 h-5" />
             </button>
           )}
         </div>
