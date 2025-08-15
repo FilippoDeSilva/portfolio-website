@@ -1,7 +1,6 @@
 import type React from "react"
 import "@/app/globals.css"
 import { ThemeProvider } from "@/components/theme-provider"
-import QueryProvider from "@/components/providers/query-provider"
 // import { Inter } from "next/font/google"
 import './globals.css'
 import "plyr-react/plyr.css";
@@ -53,9 +52,7 @@ export default function RootLayout({
       // className={inter.className}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <QueryProvider>
-            {children}
-          </QueryProvider>
+          {children}
         </ThemeProvider>
       </body>
     </html>
