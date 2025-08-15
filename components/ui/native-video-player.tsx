@@ -364,12 +364,12 @@ onClick={togglePlay}
                 <Subtitles className="w-4 h-4" />
               </button>
 
-              {/* PIP */}
+              {/* PIP - hidden on small screens */}
               {supportsPip && (
                 <button
                   type="button"
                   onClick={requestPip}
-                  className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
+                  className="hidden sm:inline-flex items-center justify-center w-8 h-8 rounded-full bg-secondary/80 text-secondary-foreground shadow-sm hover:bg-secondary transition-all duration-150 hover:scale-110"
                   aria-label="Picture in Picture"
                   title="Picture in Picture"
                 >

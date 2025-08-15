@@ -24,7 +24,6 @@ import { Download, Eye, EyeOff, LogOut, Sparkles, X } from "lucide-react";
 import ImageViewer from "@/components/ui/image-viewer";
 import NativeVideoPlayer from "@/components/ui/native-video-player";
 import NativeAudioPlayer from "@/components/ui/native-audio-player";
-import PlyrPlayer from "@/components/ui/plyr-player";
 import { Plus, Trash2, Upload, Check, RefreshCw, Paperclip, Send } from "lucide-react";
 import AIChatModal from "@/components/ui/ai-chat-modal";
 import Link from "next/link";
@@ -46,14 +45,14 @@ lowlight.register({ javascript });
 //     const path = getStoragePath(post.cover_image);
 //     if (path) filePaths.push(path);
 //   }
-//   if (Array.isArray(post?.attachments)) {
-//     for (const att of post.attachments) {
-//       if (att?.url) {
-//         const path = getStoragePath(att.url);
-//         if (path) filePaths.push(path);
-//       }
-//     }
-//   }
+  // if (Array.isArray(post?.attachments)) {
+  //   for (const att of post.attachments) {
+  //     if (att?.url) {
+  //       const path = getStoragePath(att.url);
+  //       if (path) filePaths.push(path);
+  //     }
+  //   }
+  // }
 //   if (filePaths.length > 0) {
 //     console.log('Attempting to delete these file paths from storage:', filePaths);
 //     const { error } = await supabase.storage.from('blog-attachments').remove(filePaths);
@@ -403,20 +402,20 @@ export default function BlogAdmin() {
                 }),
               });
               
-              if (thumbnailResponse.ok) {
-                const thumbnailData = await thumbnailResponse.json();
-                if (thumbnailData.success) {
-                  // Add thumbnail and metadata to attachment
-                  attachmentData = {
-                    ...attachmentData,
-                    thumbnail: thumbnailData.thumbnail.url,
-                    metadata: thumbnailData.metadata
-                  };
-                  console.log('[Thumbnail Extraction] success', thumbnailData);
-                } else {
-                  console.log('[Thumbnail Extraction] no artwork found for', file.name);
-                }
-              }
+              // if (thumbnailResponse.ok) {
+              //   const thumbnailData = await thumbnailResponse.json();
+              //   if (thumbnailData.success) {
+              //     // Add thumbnail and metadata to attachment
+              //     attachmentData = {
+              //       ...attachmentData,
+              //       thumbnail: thumbnailData.thumbnail.url,
+              //       metadata: thumbnailData.metadata
+              //     };
+              //     console.log('[Thumbnail Extraction] success', thumbnailData);
+              //   } else {
+              //     console.log('[Thumbnail Extraction] no artwork found for', file.name);
+              //   }
+              // }
             } catch (thumbnailError) {
               console.warn('[Thumbnail Extraction] failed for', file.name, ':', thumbnailError);
               // Continue without thumbnail - not a critical error
