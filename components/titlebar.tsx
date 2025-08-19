@@ -7,6 +7,7 @@ import { useUserLocationInfo } from "@/components/userLocationInfo";
 import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import { useIsMobile } from "@/components/ui/use-mobile";
+import { BrandLogo } from "./brand-logo";
 
 const NAV_ITEMS = [
   { id: "home", label: "Home", href: "/#" },
@@ -109,14 +110,13 @@ export default function TitleBar({
           className="flex items-center gap-2 font-medium"
           onClick={() => setActiveSection("home")}
         >
-          <div className="relative size-8 overflow-hidden rounded-full border border-primary/30">
-            <span className="absolute inset-0 flex items-center justify-center text-primary">
-              <User className="size-4" />
-            </span>
+          <div className="relative size-12 flex items-center justify-center">
+            <BrandLogo name={userInfo?.name} />
           </div>
-          <span className="text-lg font-medium tracking-tight">
+
+          {/* <span className="text-lg font-medium tracking-tight">
             {userInfo?.name ? <>{userInfo?.name || title}</> : null}
-          </span>
+          </span> */}
         </Link>
         <nav className="hidden md:flex gap-8">
           {NAV_ITEMS.map(({ id, label }) => (
