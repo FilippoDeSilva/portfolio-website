@@ -3,6 +3,11 @@ import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 export function BrandLogo({ name }: { name?: string | null }) {
+  const [hasMounted, setHasMounted] = React.useState(false);
+  React.useEffect(() => {
+    setHasMounted(true);
+  }, []);
+
   const initials = name
     ? name
         .split(" ")
@@ -12,9 +17,10 @@ export function BrandLogo({ name }: { name?: string | null }) {
         .toUpperCase()
     : "";
 
+  if (!hasMounted) return null; // Prevent flicker during hydration
+
   return (
     <div className="relative flex items-center justify-center">
-      {/* Scale SVG to always fit parent (size-12) */}
       <motion.svg
         className="w-full h-full"
         viewBox="0 0 100 100"
@@ -25,11 +31,10 @@ export function BrandLogo({ name }: { name?: string | null }) {
       >
         <title>Logo {initials}</title>
 
-        {/* Animated hexagon outline */}
         <motion.path
           d="M50,5 L90,27.5 L90,72.5 L50,95 L10,72.5 L10,27.5 Z"
           fill="none"
-          className="stroke-blue-700 dark:stroke-blue-700"
+          className="stroke-blue-700"
           strokeWidth="6"
           strokeDasharray="300"
           strokeDashoffset="300"
@@ -37,7 +42,6 @@ export function BrandLogo({ name }: { name?: string | null }) {
           transition={{ duration: 1, ease: "easeInOut" }}
         />
 
-        {/* Initials inside */}
         <motion.text
           x="50"
           y="62"
@@ -45,7 +49,7 @@ export function BrandLogo({ name }: { name?: string | null }) {
           fontSize="34"
           fontWeight="700"
           fontFamily="Avenir Next, sans-serif"
-          className="fill-blue-700 dark:fill-blue-700"
+          className="fill-blue-700"
           letterSpacing="-2"
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -55,7 +59,6 @@ export function BrandLogo({ name }: { name?: string | null }) {
         </motion.text>
       </motion.svg>
 
-      {/* Full name floating outside */}
       <AnimatePresence>
         {name && (
           <motion.span
