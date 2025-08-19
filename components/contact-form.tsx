@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Send } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
+import Typewriter from "./fancy/text/typewriter"
+import ShinyText from "./ui/shiny-text"
 
 export function ContactForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -158,7 +160,7 @@ export function ContactForm() {
           </span>
         ) : (
           <span className="flex items-center">
-            Send Message
+            <ShinyText text="Send Message" disabled={false} speed={2} className='custom-class' />
             <Send className="ml-2 size-4 transition-transform group-hover:translate-x-1" />
           </span>
         )}

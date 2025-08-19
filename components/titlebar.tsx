@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
@@ -17,7 +17,13 @@ const NAV_ITEMS = [
   { id: "blog", label: "Blog", href: "/blog" },
 ];
 
-export default function TitleBar({ title, children }: { title: string; children?: React.ReactNode }) {
+export default function TitleBar({
+  title,
+  children,
+}: {
+  title: string;
+  children?: React.ReactNode;
+}) {
   const [activeSection, setActiveSection] = useState("home");
   const { theme, setTheme } = useTheme();
   const userInfo = useUserLocationInfo();
@@ -51,7 +57,7 @@ export default function TitleBar({ title, children }: { title: string; children?
         { rootMargin: "-40% 0px -60% 0px" } // Active when section is in the middle 20% of viewport
       );
 
-      const homeSections = NAV_ITEMS.filter(item => item.id !== 'blog');
+      const homeSections = NAV_ITEMS.filter((item) => item.id !== "blog");
       homeSections.forEach(({ id }) => {
         const element = document.getElementById(id);
         if (element) observer.observe(element);
@@ -74,14 +80,14 @@ export default function TitleBar({ title, children }: { title: string; children?
       return;
     }
 
-    if (id === 'home' && pathname !== '/') {
-      router.push('/');
+    if (id === "home" && pathname !== "/") {
+      router.push("/");
       return;
     }
-    
-    if (id === 'home' && pathname === '/'){
-        document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
-        return;
+
+    if (id === "home" && pathname === "/") {
+      document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+      return;
     }
 
     if (pathname === "/") {
@@ -92,24 +98,24 @@ export default function TitleBar({ title, children }: { title: string; children?
   };
   // Close mobile menu when route changes
   useEffect(() => {
-    setIsMobileMenuOpen(false)
-  }, [pathname])
+    setIsMobileMenuOpen(false);
+  }, [pathname]);
 
   return (
     <header className="fixed justify-between top-0 left-0 right-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur-md m-0 p-0">
       <div className="max-w-none w-full flex h-16 items-center justify-between px-4 md:px-20">
-        <Link href="/" className="flex items-center gap-2 font-medium" onClick={() => setActiveSection('home')}>
+        <Link
+          href="/"
+          className="flex items-center gap-2 font-medium"
+          onClick={() => setActiveSection("home")}
+        >
           <div className="relative size-8 overflow-hidden rounded-full border border-primary/30">
             <span className="absolute inset-0 flex items-center justify-center text-primary">
               <User className="size-4" />
             </span>
           </div>
           <span className="text-lg font-medium tracking-tight">
-            {userInfo?.name ? (
-              <>{userInfo?.name || title}</>
-            ) : (
-              <span className="inline-block h-5 w-24 bg-muted animate-pulse rounded" />
-            )}
+            {userInfo?.name ? <>{userInfo?.name || title}</> : null}
           </span>
         </Link>
         <nav className="hidden md:flex gap-8">
@@ -132,16 +138,41 @@ export default function TitleBar({ title, children }: { title: string; children?
             onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
           >
             {theme === "dark" ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.95 7.95l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z" style={{ color: '#3b82f6' }} />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M12 3v1m0 16v1m8.66-13.66l-.71.71M4.05 19.95l-.71.71M21 12h-1M4 12H3m16.95 7.95l-.71-.71M4.05 4.05l-.71-.71M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                  style={{ color: "#3b82f6" }}
+                />
               </svg>
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z" />
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="20"
+                height="20"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M21 12.79A9 9 0 1111.21 3a7 7 0 109.79 9.79z"
+                />
               </svg>
             )}
           </button>
-          
+
           {/* Hamburger Button */}
           <button
             aria-label={isMobileMenuOpen ? "Close menu" : "Open menu"}
@@ -188,14 +219,14 @@ export default function TitleBar({ title, children }: { title: string; children?
               role="dialog"
               aria-modal="true"
               tabIndex={-1}
-              onClick={e => e.stopPropagation()}
+              onClick={(e) => e.stopPropagation()}
             >
               <ul className="w-full flex flex-col items-center gap-4 px-4">
                 {NAV_ITEMS.map(({ id, label, href }) => (
                   <li key={id} className="w-full">
                     <a
                       href={href}
-                      onClick={e => {
+                      onClick={(e) => {
                         e.stopPropagation();
                         handleNavClick(id);
                         setIsMobileMenuOpen(false);
