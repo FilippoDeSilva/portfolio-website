@@ -4,10 +4,10 @@ import { ThemeProvider } from "@/components/theme-provider"
 // import { Inter } from "next/font/google"
 import './globals.css'
 import "plyr-react/plyr.css";
-
 // const inter = Inter({ subsets: ["latin"] })
 
 export const metadata = {
+  metadataBase: new URL('https://filippodesvila.vercel.app'),
   title: "Filippo De Silva | Fullstack Developer Portfolio",
   description:
     "Explore my curated collection of professional web development projects showcasing full-stack expertise in building robust applications.",
@@ -19,17 +19,13 @@ export const metadata = {
     'MERN Developer', 'AI Engineer', 'AI Developer', 'Flutter Developer', 'React Native Developer', 'Express Developer',],
   author: 'Filippo De Silva',
 
-
-
-   // Open Graph tags
+  //  Open Graph tags
    ogTitle: "Filippo De Silva - Fullstack Developer Portfolio",
    ogDescription:
      "Explore my curated collection of professional web development projects showcasing full-stack expertise in building robust applications.",
    ogUrl: 'https://www.filippodesilva.vercel.app',
    ogImage: '/path/to/og-image.jpg',
    ogType: 'website', // You can use other types like article, profile, etc., depending on the page's content.
-
-
   canonical: 'https://www.filippodesilva.vercel.app',
 
    // Twitter Card data
@@ -37,9 +33,8 @@ export const metadata = {
   twitterTitle: "Filippo De Silva - Fullstack Developer Portfolio",
   twitterDescription:
     "Explore my curated collection of professional web development projects showcasing full-stack expertise in building robust applications.",
-  twitterImage: '/path/to/twitter-image.jpg'
+  twitterImage: '/path/to/twitter-image.jpg',
 };
-
 
 export default function RootLayout({
   children,
@@ -51,7 +46,7 @@ export default function RootLayout({
       <body 
       // className={inter.className}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
           {children}
         </ThemeProvider>
       </body>

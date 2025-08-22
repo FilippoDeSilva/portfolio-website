@@ -35,7 +35,7 @@ export function BrandLogo({ name }: { name?: string | null }) {
           d="M50,5 L90,27.5 L90,72.5 L50,95 L10,72.5 L10,27.5 Z"
           fill="none"
           className="stroke-blue-700"
-          strokeWidth="6"
+          strokeWidth="2"
           strokeDasharray="300"
           strokeDashoffset="300"
           animate={{ strokeDashoffset: 0 }}
@@ -67,7 +67,7 @@ export function BrandLogo({ name }: { name?: string | null }) {
             animate={{ opacity: 1, x: 3 }}
             exit={{ opacity: 0, x: 0 }}
             transition={{ delay: 1, duration: 0.6, ease: "easeOut" }}
-            className="absolute left-full ml-1 whitespace-nowrap text-lg font-medium tracking-tight text-gray-900 dark:text-white"
+            className="absolute left-full ml-1 whitespace-nowrap text-lg font-medium tracking-tight text-gray-800 dark:text-white"
           >
             {name}
           </motion.span>

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { BlogCard, BlogPost } from "@/components/blog-card";
+import { BlogPost } from "@/components/blog-card";
 import { useParams } from "next/navigation";
 import TitleBar from "@/components/titlebar";
 import { BlogComments } from "@/components/blog-comments";
@@ -11,10 +11,37 @@ import { Button } from "@/components/ui/button";
 import { BlogList } from "@/components/blog-list";
 import Image from "next/image";
 import ImageViewer from "@/components/ui/image-viewer";
-import dynamic from "next/dynamic";
 import NativeVideoPlayer from "@/components/ui/native-video-player";
 import NativeAudioPlayer from "@/components/ui/native-audio-player";
 // const PlyrPlayer = dynamic(() => import("@/components/ui/plyr-player"), { ssr: false });
+// import { Metadata } from "next";
+
+// export const metadata: Metadata = {
+//   title: "Filippo De Silva | Latest Blog Posts",
+//   description: "Thoughts, stories, and ideas from the things that spark my curiosity.",
+//   generator: "Next.js",
+//   keywords: ['Fullstack Developer', 'Web Development','Filippo De Silva', 'Samuel Dagnachew', 'Web Developer',
+//     'Next.js', 'Nextjs', 'Next.js Fullstack Developer', 'Nextjs Fullstack Developer', 
+//     'Next.js Developer', 'Nextjs Developer', 'Java', 'Python', 'Python Developer', 
+//     'Java Developer', 'Node.js', 'Nodejs', 'Node.js Developer', 'Nodejs Developer', 
+//     'MERN Developer', 'AI Engineer', 'AI Developer', 'Flutter Developer', 'React Native Developer',
+//     'Express Developer', 'Filippo De Silva Blogs', 'Filippo De Silva BloPosts', 
+//     'Samuel Dagnachew Blogs', 'Samuel Dagnachew BlogPosts'],
+
+//   alternates: {
+//     canonical: 'https://www.filippodesilva.vercel.app',
+//     languages: {
+//       'en-US': 'https://www.filippodesilva.vercel.app',
+//     }
+//   },
+//   openGraph: {
+//     title: 'Filippo De Silva | Latest Blog Posts',
+//     description: '',
+//     url: 'https://www.filippodesilva.vercel.app',
+//     siteName: 'Filippo De Silva | Latest Blog Posts',
+//     images: [{ url: 'https://example.com/og.png' }]
+//   },
+// };
 
 export default function BlogDetailPage() {
   const params = useParams();

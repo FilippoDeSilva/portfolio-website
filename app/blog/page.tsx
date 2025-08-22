@@ -3,7 +3,6 @@ import { useState } from "react";
 import { BlogList } from "@/components/blog-list";
 import TitleBar from "@/components/titlebar";
 import { Pagination } from "@/components/ui/pagination";
-
 const POSTS_PER_PAGE = 9;
 
 export default function BlogPage() {

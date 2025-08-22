@@ -26,6 +26,7 @@ import { useUserLocationInfo } from "@/components/userLocationInfo";
 import TitleBar from "@/components/titlebar";
 import ShinyText from '@/components/ui/shiny-text';
 import Typewriter from "@/components/fancy/text/typewriter";
+
 export default function Home() {
   const { scrollYProgress } = useScroll();
   const opacity = useTransform(scrollYProgress, [0, 0.05], [1, 0]);
@@ -200,7 +201,7 @@ export default function Home() {
                   <span className="sr-only">GitHub</span>
                 </Link>
                 <Link
-                  href="https://t.me/Lt_Col_Sam"
+                  href="https://t.me/@Lt_Col_Sam"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-muted-foreground hover:text-primary transition-colors"
@@ -263,7 +264,7 @@ export default function Home() {
                           "Precision.",
                         ]}
                         speed={100}
-                        className="text-base font-bold text-blue-500 tracking-tight sm:text-2xl text-pretty"
+                        className="text-base font-bold text-primary tracking-tight sm:text-2xl text-pretty"
                         waitTime={1500}
                         deleteSpeed={100}
                         loop={true}
@@ -460,7 +461,7 @@ export default function Home() {
                     <span className="sr-only">GitHub</span>
                   </Link>
                   <Link
-                    href="https://web.telegram.org/k/#@Lt_Col_Sam"
+                    href="https://t.me/@Lt_Col_Sam"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-primary transition-colors"
