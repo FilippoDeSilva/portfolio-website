@@ -4,7 +4,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { BlogPost } from "@/components/blog-card";
 import { useParams } from "next/navigation";
 import TitleBar from "@/components/titlebar";
-import { BlogComments } from "@/components/blog-comments";
+import BlogComments from "@/components/blog-comments";
 import { BlogReactions } from "@/components/blog-reactions";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -411,7 +411,7 @@ export default function BlogDetailPage() {
             <BlogReactions postId={post.id} initialReactions={{ likes: post.likes || 0, love: post.love || 0, laugh: post.laugh || 0 }} />
             {/* Comments Section */}
             <div className="pt-8">
-              <BlogComments postId={post.id} />
+              <BlogComments post={{ id: post.id, title: post.title }} />
             </div>
             {/* Timestamp and View Count always bottom right */}
             <div className="flex items-end justify-end mt-4 gap-3">

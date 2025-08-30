@@ -31,6 +31,7 @@
     "autoprefixer": "^10.4.20",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "disqus-react": "^1.1.7",
     "framer-motion": "latest",
     "gsap": "^3.13.0",
     "lowlight": "^3.3.0",

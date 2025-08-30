@@ -2,7 +2,7 @@ import React from "react";
 import Image from "next/image";
 import { Trash2 } from "lucide-react";
 import { BlogReactions } from "./blog-reactions";
-import { BlogComments } from "./blog-comments";
+import BlogComments from "./blog-comments";
 import MediaModal from "./ui/media-modal";
 
 export type BlogPost = {
@@ -349,7 +349,7 @@ export function BlogCard({
                   laugh: post.laugh || 0,
                 }}
               />
-              <BlogComments postId={post.id} />
+              <BlogComments post={{ id: post.id, title: post.title }} />
             </>
           )}
         </div>
