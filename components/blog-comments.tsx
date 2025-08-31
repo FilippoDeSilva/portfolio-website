@@ -386,7 +386,7 @@ interface Comment {
   reactions?: { [key: string]: number };
 }
 
-export function BlogComments({ postId }: { postId: string }) {
+export default function BlogComments({ postId }: { postId: string }) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState("");

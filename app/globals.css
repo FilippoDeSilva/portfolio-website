@@ -92,7 +92,7 @@ html {
 }
 
 /* Plyr sizing fixes: keep controls visible and inside container */
-.plyr{
+/* .plyr{
 	width:100% !important;
 	height:100% !important;
 }
@@ -108,7 +108,7 @@ html {
 .plyr__controls{
 	opacity:1 !important;
 	transform:none !important;
-}
+} */
 
 /* Theme-aware native media player styling */
 .themed-audio-player {
@@ -251,10 +251,4 @@ html {
     border-color: hsl(var(--border));
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
   }
-}
-
-
-#disqus_thread iframe {
-  transform: scale(0.85);
-  transform-origin: top center;
 }

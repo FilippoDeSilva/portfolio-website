@@ -1648,9 +1648,12 @@ export default function BlogAdmin() {
               </div>
             </div>
           )}
+          
         </div>
       )}
-      <Footer />
+      <div className="h-3">
+    <Footer />
+    </div>
     </div>
   );
 }

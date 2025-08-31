@@ -21,6 +21,7 @@ export default function BlogPage() {
   };
 
   return (
+    <>
     <main className="flex-1 pt-2">
       <TitleBar title="Blog"/>
       <section className="py-24 bg-background">
@@ -44,7 +45,10 @@ export default function BlogPage() {
           />
         </div>
       </section>
-      <Footer/>
     </main>
+      <div className="h-3">
+    <Footer />
+    </div>
+    </>
   );
 }
