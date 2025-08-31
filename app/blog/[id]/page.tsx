@@ -166,7 +166,7 @@ export default function BlogDetailPage() {
       </div>
     );
   if (error)
-    return <div className="py-24 text-center text-red-500">Error: {error}</div>;
+    return <><TitleBar title="blog" ></TitleBar><div className="py-24 text-center text-red-500">Error: {error}</div> <Footer /></>;
   if (!post)
     return <div className="py-24 text-center">Blog post not found.</div>;
 
