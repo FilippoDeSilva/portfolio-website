@@ -5,17 +5,14 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { Button } from "@/components/ui/button";
 
 import {
-
   Github,
   Linkedin,
-
   MousePointer,
-
   Send,
   Code,
   Server,
   Database,
-  MoveDown
+  MoveDown,
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,8 +21,9 @@ import { SkillCard } from "@/components/skill-card";
 import { ContactForm } from "@/components/contact-form";
 import { useUserLocationInfo } from "@/components/userLocationInfo";
 import TitleBar from "@/components/titlebar";
-import ShinyText from '@/components/ui/shiny-text';
+import ShinyText from "@/components/ui/shiny-text";
 import Typewriter from "@/components/fancy/text/typewriter";
+import { Footer } from "@/components/footer";
 
 export default function Home() {
   const { scrollYProgress } = useScroll();
@@ -36,16 +34,22 @@ export default function Home() {
   const [githubProjects, setGithubProjects] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch('/api/github-projects')
-      .then(res => res.json())
-      .then(data => setGithubProjects(data));
+    fetch("/api/github-projects")
+      .then((res) => res.json())
+      .then((data) => setGithubProjects(data));
   }, []);
 
   const skills = [
     {
       name: "Frontend Development",
       icon: <Code className="size-6 text-primary" />,
-      items: ["Next.js", "React", "Tailwind CSS", "HTML5/CSS3", "JavaScript/TypeScript"],
+      items: [
+        "Next.js",
+        "React",
+        "Tailwind CSS",
+        "HTML5/CSS3",
+        "JavaScript/TypeScript",
+      ],
     },
     {
       name: "Backend Development",
@@ -84,7 +88,13 @@ export default function Home() {
           <path d="M2 12h2"></path>
         </svg>
       ),
-      items: ["Figma", "User Research", "Wire-framing", "Prototyping", "Responsive Design"],
+      items: [
+        "Figma",
+        "User Research",
+        "Wire-framing",
+        "Prototyping",
+        "Responsive Design",
+      ],
     },
     {
       name: "DevOps & Tools",
@@ -127,9 +137,17 @@ export default function Home() {
           <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
         </svg>
       ),
-      items: ["Problem Solving", "Communication", "Teamwork", "Time Management", "Adaptability", "Continuous Learning", "Dedication"],
+      items: [
+        "Problem Solving",
+        "Communication",
+        "Teamwork",
+        "Time Management",
+        "Adaptability",
+        "Continuous Learning",
+        "Dedication",
+      ],
     },
-  ]
+  ];
 
   const { name, resumeUrl, isLoading } = useUserLocationInfo();
 
@@ -138,7 +156,10 @@ export default function Home() {
       <TitleBar title="Filippo De Silva" />
 
       <main className="flex-1 pt-16">
-        <section id="home" className="relative min-h-[80vh] flex items-center overflow-hidden">
+        <section
+          id="home"
+          className="relative min-h-[80vh] flex items-center overflow-hidden"
+        >
           <div className="container relative z-10">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -256,13 +277,11 @@ export default function Home() {
                 <section className="bg-muted/20">
                   <div className="container">
                     <div className="text-left">
-                      <span className="-ml-5 -mt-4 text-base font-bold tracking-tight sm:text-2xl">Designing with </span>
+                      <span className="-ml-5 -mt-4 text-base font-bold tracking-tight sm:text-2xl">
+                        Designing with{" "}
+                      </span>
                       <Typewriter
-                        text={[
-                          "Impact.",
-                          "Purpose.",
-                          "Precision.",
-                        ]}
+                        text={["Impact.", "Purpose.", "Precision."]}
                         speed={100}
                         className="text-base font-bold text-primary tracking-tight sm:text-2xl text-pretty"
                         waitTime={1500}
@@ -281,10 +300,10 @@ export default function Home() {
                   {/* Static Text */}
                   <div className="pl-6 space-y-4 pt-4 text-muted-foreground">
                     <p>
-                      I'm a Fullstack Developer creating user-centered
-                      digital products. My Computer Science background
-                      shapes how I approach problems and find optimal
-                      solutions through strategic thinking and meticulous execution.
+                      I'm a Fullstack Developer creating user-centered digital
+                      products. My Computer Science background shapes how I
+                      approach problems and find optimal solutions through
+                      strategic thinking and meticulous execution.
                     </p>
                     <p>
                       My design process starts with researching users' needs,
@@ -296,7 +315,16 @@ export default function Home() {
                 </div>
 
                 <div className="mt-12 ml-6 flex flex-col sm:flex-row gap-4">
-                  <Button><Link href="#contact"><ShinyText text="Get In Touch" disabled={false} speed={2} className='custom-class' /></Link></Button>
+                  <Button>
+                    <Link href="#contact">
+                      <ShinyText
+                        text="Get In Touch"
+                        disabled={false}
+                        speed={2}
+                        className="custom-class"
+                      />
+                    </Link>
+                  </Button>
                   <Button
                     variant="outline"
                     onClick={() => {
@@ -385,14 +413,19 @@ export default function Home() {
                           title: repo.name,
                           description: repo.description || "",
                           image: repo.image || "/placeholder.svg",
-                          githubOgImage: `https://opengraph.githubassets.com/1/${repo.owner?.login || "FilippoDeSilva"}/${repo.name}`,
+                          githubOgImage: `https://opengraph.githubassets.com/1/${
+                            repo.owner?.login || "FilippoDeSilva"
+                          }/${repo.name}`,
                           tags: repo.topics || [],
                           link: repo.homepage || "#",
                           github: repo.html_url || "#",
                           stars: repo.stargazers_count,
                           forks: repo.forks_count,
                           watchers: repo.watchers_count,
-                          isDeployed: repo.homepage && repo.homepage !== '' && repo.homepage !== '#',
+                          isDeployed:
+                            repo.homepage &&
+                            repo.homepage !== "" &&
+                            repo.homepage !== "#",
                         }}
                       />
                     </motion.div>
@@ -436,11 +469,14 @@ export default function Home() {
                 </h2>
                 <p className="text-muted-foreground mb-8">
                   I'm currently available for freelance work and full-time
-                  opportunities. If you're looking for a fullstack developer who can
-                  deliver thoughtful, user-centered fullstack software solutions, let's connect.
+                  opportunities. If you're looking for a fullstack developer who
+                  can deliver thoughtful, user-centered fullstack software
+                  solutions, let's connect.
                 </p>
 
-                <div className="flex justify-center mb-2 animate-bounce text-blue-500"><MoveDown size={24} /></div>
+                <div className="flex justify-center mb-2 animate-bounce text-blue-500">
+                  <MoveDown size={24} />
+                </div>
                 <div className="flex items-center gap-4 justify-center pt-5">
                   <Link
                     href="https://www.linkedin.com/in/filippo-de-silva"
@@ -482,14 +518,7 @@ export default function Home() {
           </div>
         </section>
       </main>
-
-      <footer className="border-t py-8">
-        <div className="container flex flex-col items-center justify-center gap-4 md:flex-row">
-          <p className="text-center text-sm text-muted-foreground">
-            © {new Date().getFullYear()}. All rights reserved.
-          </p>
-        </div>
-      </footer>
+      <Footer />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import {DiscussionEmbed} from "disqus-react";
+import { DiscussionEmbed } from "disqus-react";
 type BlogCommentsProps = {
   post: {
     id: string;
@@ -15,6 +15,7 @@ const BlogComments = ({ post }: BlogCommentsProps) => {
     title: post.title,
     language: 'en',
   };
+  console.log(disqusConfig);
 
   return (
     <div style={{ marginTop: '2rem' }}>
