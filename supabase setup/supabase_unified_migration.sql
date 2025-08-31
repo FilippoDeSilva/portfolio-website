@@ -17,16 +17,36 @@ CREATE TABLE IF NOT EXISTS blogposts (
   view_count integer NOT NULL DEFAULT 0
 );
 
+-- ===============================
 -- Comments table
-CREATE TABLE IF NOT EXISTS comments (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
-  name text NOT NULL,
-  post_id uuid REFERENCES blogposts(id) ON DELETE CASCADE,
-  user_id uuid REFERENCES auth.users(id),
-  parent_id uuid REFERENCES comments(id) ON DELETE CASCADE,
-  content text NOT NULL,
-  created_at timestamptz NOT NULL DEFAULT now()
+-- ===============================
+create table if not exists comments (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  post_id uuid references blogposts(id) on delete cascade,
+  user_id uuid not null,  -- 🚨 changed: must always have a user_id (guest or auth)
+  parent_id uuid references comments(id) on delete cascade,
+  content text not null,
+  created_at timestamptz not null default now()
 );
+
+-- Trigger function: set user_id if not provided (hybrid guest + auth support)
+create or replace function set_comment_user_id()
+returns trigger as $$
+begin
+  if new.user_id is null then
+    new.user_id := auth.uid();
+  end if;
+  return new;
+end;
+$$ language plpgsql security definer;
+
+drop trigger if exists set_user_id_before_insert on comments;
+create trigger set_user_id_before_insert
+before insert on comments
+for each row
+execute function set_comment_user_id();
+
 
 -- Function to increment view_count atomically
 CREATE OR REPLACE FUNCTION increment_view_count(post_id uuid)
@@ -51,14 +71,30 @@ CREATE POLICY "Allow public read access to blog posts" ON blogposts
   FOR SELECT TO public USING (true);
 
 -- Comments RLS policies
-CREATE POLICY "Allow anyone to insert comments" ON comments
-  FOR INSERT WITH CHECK (true);
-CREATE POLICY "Allow comment owner to update" ON comments
-  FOR UPDATE USING (user_id::text = current_setting('request.jwt.claims', true)::json->>'sub' OR user_id = user_id);
-CREATE POLICY "Allow comment owner to delete" ON comments
-  FOR DELETE USING (user_id::text = current_setting('request.jwt.claims', true)::json->>'sub' OR user_id = user_id);
-CREATE POLICY "Allow anyone to read comments" ON comments
-  FOR SELECT USING (true);
+-- Anyone can read comments
+create policy if not exists "Allow anyone to read comments"
+on comments for select using (true);
+
+-- Anyone can insert comments (must provide user_id OR auth.uid())
+create policy if not exists "Allow anyone to insert comments"
+on comments for insert with check (user_id is not null);
+
+-- Only comment owners can update (auth.uid or guest UUID)
+create policy if not exists "Allow comment owner to update"
+on comments for update
+using (
+  (auth.uid() is not null and auth.uid() = user_id)
+  or (auth.uid() is null)
+);
+
+-- Only comment owners can delete (auth.uid or guest UUID)
+create policy if not exists "Allow comment owner to delete"
+on comments for delete
+using (
+  (auth.uid() is not null and auth.uid() = user_id)
+  or (auth.uid() is null)
+);
+
 
 -- Chat Histories table
 CREATE TABLE IF NOT EXISTS chat_histories (
