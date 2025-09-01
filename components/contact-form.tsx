@@ -94,7 +94,7 @@ export function ContactForm() {
             id="lastName"
             placeholder="Doe"
             required
-            className="border-border/50 bg-background/50 focus:border-blue-500 focus:ring-blue-500/20"
+            className="border-border/50 bg-background/50 focus:border-blue-600 focus:ring-blue-500/20"
             value={formData.lastName}
             onChange={handleChange}
           />
@@ -109,7 +109,7 @@ export function ContactForm() {
           type="email"
           placeholder="john.doe@example.com"
           required
-          className="border-border/50 bg-background/50 focus:border-blue-500 focus:ring-blue-500/20"
+          className="border-border/50 bg-background/50 focus:border-blue-600 focus:ring-blue-500/20"
           value={formData.email}
           onChange={handleChange}
         />
@@ -122,7 +122,7 @@ export function ContactForm() {
           id="subject"
           placeholder="Project Inquiry"
           required
-          className="border-border/50 bg-background/50 focus:border-blue-500 focus:ring-blue-500/20"
+          className="border-border/50 bg-background/50 focus:border-blue-600 focus:ring-blue-500/20"
           value={formData.subject}
           onChange={handleChange}
         />
@@ -135,7 +135,7 @@ export function ContactForm() {
           id="message"
           placeholder="Tell me about your project..."
           required
-          className="min-h-[120px] border-border/50 bg-background/50 focus:border-blue-500 focus:ring-blue-500/20"
+          className="min-h-[120px] border-border/50 bg-background/50 focus:border-blue-600 focus:ring-blue-500/20"
           value={formData.message}
           onChange={handleChange}
         />

@@ -88,27 +88,27 @@ const MemoizedBlogCard = memo(({ post, viewMode }: { post: BlogPost; viewMode: "
 
 MemoizedBlogCard.displayName = "MemoizedBlogCard";
 
-// Memoized search input component
-const SearchInput = memo(({ 
-  searchTerm, 
-  onSearchChange 
-}: { 
-  searchTerm: string; 
-  onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) => (
-  <div className="relative flex-1 max-w-md">
-    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-    <Input
-      type="text"
-      placeholder="Search posts..."
-      value={searchTerm}
-      onChange={onSearchChange}
-      className="pl-10 pr-4 h-12 rounded-xl"
-    />
-  </div>
-));
+// // Memoized search input component
+// const SearchInput = memo(({ 
+//   searchTerm, 
+//   onSearchChange 
+// }: { 
+//   searchTerm: string; 
+//   onSearchChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+// }) => (
+//   <div className="relative flex-1 max-w-md">
+//     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+//     <Input
+//       type="text"
+//       placeholder="Search posts..."
+//       value={searchTerm}
+//       onChange={onSearchChange}
+//       className="pl-10 pr-4 h-12 rounded-xl"
+//     />
+//   </div>
+// ));
 
-SearchInput.displayName = "SearchInput";
+// SearchInput.displayName = "SearchInput";
 
 // Memoized filter controls component
 const FilterControls = memo(({ 
@@ -447,10 +447,10 @@ export function BlogList({
         >
           <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
             {/* Search Input */}
-            <SearchInput 
+            {/* <SearchInput 
               searchTerm={searchTerm} 
               onSearchChange={handleSearchChange} 
-            />
+            /> */}
 
             {/* Filter and View Controls */}
             <FilterControls 

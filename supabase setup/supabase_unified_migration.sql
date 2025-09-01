@@ -46,6 +46,11 @@ create table if not exists comments (
 ALTER TABLE comments
 ADD COLUMN reactions jsonb DEFAULT '{}'::jsonb;
 
+-- ===============================
+-- Enable Realtime for comments
+-- ===============================
+ALTER PUBLICATION supabase_realtime ADD TABLE comments;
+
 
 -- Trigger function: set user_id if not provided (hybrid guest + auth support)
 create or replace function set_comment_user_id()

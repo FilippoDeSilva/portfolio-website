@@ -79,20 +79,7 @@ function getAvatarUrl(seed: string) {
   )}&radius=50&mouth=smile,smile02&eyes=frame01,frame02&backgroundType=gradientLinear`;
 }
 
-/** Anti-spam: remember if this user reacted to a comment (client-side) */
-function hasReactedLocally(commentId: string, type: ReactionKey) {
-  if (typeof window === "undefined") return false;
-  const set = JSON.parse(localStorage.getItem("commentReactions") || "{}");
-  return !!set[`${commentId}:${type}`];
-}
 
-function markReactedLocally(commentId: string, type: ReactionKey) {
-  if (typeof window === "undefined") return;
-  const key = `${commentId}:${type}`;
-  const set = JSON.parse(localStorage.getItem("commentReactions") || "{}");
-  set[key] = true;
-  localStorage.setItem("commentReactions", JSON.stringify(set));
-}
 
 // Stable input components that won't re-render
 const StableCommentInput = memo(({ 
@@ -162,13 +149,17 @@ StableEditInput.displayName = "StableEditInput";
 const IsolatedCommentInput = memo(({ 
   initialValue = "",
   onSubmit,
+  onCancel,
   placeholder,
-  submitText = "Post"
+  submitText = "Post",
+  showCancel = false
 }: { 
   initialValue?: string;
   onSubmit: (content: string) => void;
+  onCancel?: () => void;
   placeholder: string;
   submitText?: string;
+  showCancel?: boolean;
 }) => {
   const [value, setValue] = useState(initialValue);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -191,6 +182,11 @@ const IsolatedCommentInput = memo(({
     setValue(e.target.value);
   }, []);
 
+  const handleCancel = useCallback(() => {
+    setValue("");
+    if (onCancel) onCancel();
+  }, [onCancel]);
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mb-6">
       <div className="flex items-start gap-3 sm:flex-1">
@@ -207,6 +203,16 @@ const IsolatedCommentInput = memo(({
         />
       </div>
       <div className="flex gap-2 self-end sm:self-auto">
+        {showCancel && (
+          <Button 
+            type="button" 
+            variant="outline" 
+            onClick={handleCancel}
+            className="px-4 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 gap-2"
+          >
+            <X size={16} /> Cancel
+          </Button>
+        )}
         <Button type="submit" className="px-4 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
           <Send size={16} /> {submitText}
         </Button>
@@ -323,24 +329,40 @@ export default function BlogComments({ postId }: { postId: string }) {
   useEffect(() => {
     fetchComments();
 
-    // Real-time updates
+    // Real-time updates with proper error handling
     const channel = supabase
       .channel(`comments-${postId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "comments", filter: `post_id=eq.${postId}` },
+        { 
+          event: "*", 
+          schema: "public", 
+          table: "comments", 
+          filter: `post_id=eq.${postId}` 
+        },
         (payload) => {
           console.log("Real-time update received:", payload);
-          if (payload.eventType === "INSERT") {
-            setComments(prev => [...prev, payload.new as Comment]);
-          } else if (payload.eventType === "UPDATE") {
-            setComments(prev => prev.map(c => c.id === payload.new.id ? payload.new as Comment : c));
-          } else if (payload.eventType === "DELETE") {
-            setComments(prev => prev.filter(c => c.id !== payload.old.id));
-          }
+          
+          // Add a small delay to ensure database consistency
+          setTimeout(() => {
+            if (payload.eventType === "INSERT") {
+              setComments(prev => {
+                // Avoid duplicates
+                if (prev.some(c => c.id === payload.new.id)) return prev;
+                return [...prev, payload.new as Comment];
+              });
+            } else if (payload.eventType === "UPDATE") {
+              setComments(prev => prev.map(c => c.id === payload.new.id ? payload.new as Comment : c));
+            } else if (payload.eventType === "DELETE") {
+              setComments(prev => prev.filter(c => c.id !== payload.old.id));
+            }
+          }, 100);
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        console.log("Subscription status:", status);
+        if (err) console.error("Subscription error:", err);
+      });
 
     return () => {
       supabase.removeChannel(channel);
@@ -374,7 +396,7 @@ export default function BlogComments({ postId }: { postId: string }) {
   }
 
   // Handle comment submission from isolated input
-  const handleCommentSubmit = useCallback((content: string) => {
+  const handleCommentSubmit = useCallback(async (content: string) => {
     if (!userId) return setError("You must be identified to comment.");
     if (!username) {
       setShowNamePrompt(true);
@@ -382,6 +404,7 @@ export default function BlogComments({ postId }: { postId: string }) {
       return;
     }
 
+    const tempId = `temp-${Date.now()}`;
     const payload = {
       post_id: postId,
       content,
@@ -391,27 +414,59 @@ export default function BlogComments({ postId }: { postId: string }) {
       reactions: {},
     };
 
-    // Insert comment
-    supabase.from("comments").insert([payload]).then(({ error }) => {
+    // Optimistic update - add comment immediately
+    const optimisticComment: Comment = {
+      id: tempId,
+      post_id: postId,
+      content,
+      parent_id: replyTo,
+      user_id: userId,
+      name: username,
+      created_at: new Date().toISOString(),
+      reactions: {},
+    };
+
+    setComments(prev => [...prev, optimisticComment]);
+
+    try {
+      // Insert comment
+      const { data, error } = await supabase.from("comments").insert([payload]).select();
+      
       if (error) {
         console.error("Error inserting comment:", error);
         setError("Failed to add comment: " + error.message);
+        // Remove optimistic comment on error
+        setComments(prev => prev.filter(c => c.id !== tempId));
       } else {
+        console.log("Comment inserted successfully:", data);
+        // Replace optimistic comment with real one
+        if (data && data[0]) {
+          setComments(prev => prev.map(c => c.id === tempId ? data[0] as Comment : c));
+        }
+        
         // Auto-show replies for new comments
         if (replyTo) {
           setShowReplies(prev => new Set([...prev, replyTo]));
         }
+        // Clear reply state after successful submission
+        setReplyTo(null);
         // Smooth scroll to new comment
         setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 100);
       }
-    });
+    } catch (err) {
+      console.error("Exception inserting comment:", err);
+      setError("Failed to add comment");
+      // Remove optimistic comment on error
+      setComments(prev => prev.filter(c => c.id !== tempId));
+    }
   }, [userId, username, postId, replyTo]);
 
   // Handle reply submission from isolated input
-  const handleReplySubmit = useCallback((content: string) => {
+  const handleReplySubmit = useCallback(async (content: string) => {
     if (!userId) return setError("You must be identified to comment.");
     if (!username) return setError("You must set a display name.");
 
+    const tempId = `temp-reply-${Date.now()}`;
     const payload = {
       post_id: postId,
       content,
@@ -421,24 +476,54 @@ export default function BlogComments({ postId }: { postId: string }) {
       reactions: {},
     };
 
-    // Insert reply
-    supabase.from("comments").insert([payload]).then(({ error }) => {
+    // Optimistic update - add reply immediately
+    const optimisticReply: Comment = {
+      id: tempId,
+      post_id: postId,
+      content,
+      parent_id: replyTo,
+      user_id: userId,
+      name: username,
+      created_at: new Date().toISOString(),
+      reactions: {},
+    };
+
+    setComments(prev => [...prev, optimisticReply]);
+
+    try {
+      // Insert reply
+      const { data, error } = await supabase.from("comments").insert([payload]).select();
+      
       if (error) {
         console.error("Error inserting reply:", error);
         setError("Failed to add reply: " + error.message);
+        // Remove optimistic reply on error
+        setComments(prev => prev.filter(c => c.id !== tempId));
       } else {
+        console.log("Reply inserted successfully:", data);
+        // Replace optimistic reply with real one
+        if (data && data[0]) {
+          setComments(prev => prev.map(c => c.id === tempId ? data[0] as Comment : c));
+        }
+        
         // Auto-show replies for new comments
-        setShowReplies(prev => new Set([...prev, replyTo!]));
-        // Clear reply state
+        if (replyTo) {
+          setShowReplies(prev => new Set([...prev, replyTo]));
+        }
+        // Clear reply state after successful submission
         setReplyTo(null);
         // Smooth scroll to new comment
         setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 100);
       }
-    });
+    } catch (err) {
+      console.error("Exception inserting reply:", err);
+      setError("Failed to add reply");
+      // Remove optimistic reply on error
+      setComments(prev => prev.filter(c => c.id !== tempId));
+    }
   }, [userId, username, postId, replyTo]);
 
-  // Legacy form handler for compatibility
-  const handleSubmit = useCallback((e: React.FormEvent) => {
+  const handleSubmit = useCallback((e: any) => {
     e.preventDefault();
     if (comment.trim()) {
       handleCommentSubmit(comment);
@@ -516,14 +601,28 @@ export default function BlogComments({ postId }: { postId: string }) {
   }
 
   async function handleReaction(commentId: string, type: ReactionKey) {
-    if (hasReactedLocally(commentId, type)) return;
+    if (!userId) return;
+    
+    // Check if user has already reacted to this comment
+    const reactionKey = `comment_reaction_${commentId}_${userId}`;
+    const existingReaction = localStorage.getItem(reactionKey);
+    
+    if (existingReaction === type) return; // Already reacted with this type
 
     try {
       const comment = comments.find(c => c.id === commentId);
       if (!comment) return;
 
-      const current = (comment.reactions?.[type] ?? 0) as number;
-      const newReactions = { ...(comment.reactions || {}), [type]: current + 1 };
+      let newReactions = { ...(comment.reactions || {}) };
+      
+      // If user had a different reaction, decrement it
+      if (existingReaction && newReactions[existingReaction as ReactionKey]) {
+        newReactions[existingReaction as ReactionKey] = Math.max(0, (newReactions[existingReaction as ReactionKey] as number) - 1);
+      }
+      
+      // Increment new reaction
+      const current = (newReactions[type] ?? 0) as number;
+      newReactions[type] = current + 1;
 
       const { error } = await supabase
         .from("comments")
@@ -535,10 +634,27 @@ export default function BlogComments({ postId }: { postId: string }) {
         return;
       }
       
-      markReactedLocally(commentId, type);
+      // Save user's reaction
+      localStorage.setItem(reactionKey, type);
     } catch (err) {
       console.error("Exception updating reaction:", err);
     }
+  }
+
+  // Check if user has reacted to a specific comment
+  function hasUserReacted(commentId: string, type: ReactionKey): boolean {
+    if (!userId) return false;
+    const reactionKey = `comment_reaction_${commentId}_${userId}`;
+    const existingReaction = localStorage.getItem(reactionKey);
+    return existingReaction === type;
+  }
+
+  // Get user's current reaction for a comment
+  function getUserReaction(commentId: string): ReactionKey | null {
+    if (!userId) return null;
+    const reactionKey = `comment_reaction_${commentId}_${userId}`;
+    const existingReaction = localStorage.getItem(reactionKey);
+    return existingReaction as ReactionKey | null;
   }
 
   // Separate top-level comments and replies
@@ -683,20 +799,34 @@ export default function BlogComments({ postId }: { postId: string }) {
               <div className="flex flex-wrap gap-1 mt-3">
                 {REACTIONS.map(({ key, label, Icon, color }) => {
                   const count = c.reactions?.[key] || 0;
-                  const disabled = hasReactedLocally(c.id, key);
+                  const userReaction = getUserReaction(c.id);
+                  const isSelected = userReaction === key;
+                  const disabled = hasUserReacted(c.id, key);
+                  
                   return (
                     <Button
                       key={key}
-                      variant="ghost"
+                      variant={isSelected ? "default" : "ghost"}
                       size="sm"
-                      className={`${themeClasses.reactionBtn} ${color} ${disabled ? 'opacity-70 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                      className={`${themeClasses.reactionBtn} ${color} ${
+                        isSelected 
+                          ? 'bg-primary/20 border-primary/30 text-primary font-semibold shadow-md' 
+                          : disabled 
+                            ? 'opacity-70 cursor-not-allowed' 
+                            : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+                      }`}
                       onClick={() => handleReaction(c.id, key)}
                       disabled={disabled}
                     >
                       <Icon size={16} />
                       <span className="hidden xs:inline">{label}</span>
                       {count > 0 && (
-                        <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0.5">
+                        <Badge 
+                          variant={isSelected ? "default" : "secondary"} 
+                          className={`ml-1 text-xs px-1.5 py-0.5 ${
+                            isSelected ? 'bg-primary text-primary-foreground' : ''
+                          }`}
+                        >
                           {count}
                         </Badge>
                       )}
@@ -862,8 +992,10 @@ export default function BlogComments({ postId }: { postId: string }) {
                   >
                     <IsolatedCommentInput
                       onSubmit={handleReplySubmit}
+                      onCancel={handleCancelReply}
                       placeholder="Write a reply (Markdown supported)..."
                       submitText="Reply"
+                      showCancel={true}
                     />
                   </motion.div>
                 )}

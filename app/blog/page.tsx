@@ -76,7 +76,7 @@ export default function BlogPage() {
                     placeholder="Search posts by title or content..."
                     value={searchTerm}
                     onChange={handleSearchChange}
-                    className="pl-12 pr-4 h-12 rounded-xl border-gray-200 focus:ring-1 focus:ring-blue-500 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm text-base"
+                    className="pl-12 pr-4 h-12 rounded-xl border-gray-200 focus:ring-1 focus:ring-blue-600 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm text-base"
                   />
                 </div>
 

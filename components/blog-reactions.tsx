@@ -19,10 +19,34 @@ export function BlogReactions({
   const [reactions, setReactions] = useState(initialReactions);
   const [userReacted, setUserReacted] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
 
   useEffect(() => {
     setReactions(initialReactions);
   }, [initialReactions]);
+
+  useEffect(() => {
+    // Get user ID for tracking reactions
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user?.id) {
+        setUserId(data.user.id);
+      } else {
+        let localId = localStorage.getItem("blogUserId");
+        if (!localId) {
+          localId = crypto.randomUUID();
+          localStorage.setItem("blogUserId", localId);
+        }
+        setUserId(localId);
+      }
+    });
+
+    // Check if user has already reacted
+    const reactionKey = `blog_reaction_${postId}`;
+    const savedReaction = localStorage.getItem(reactionKey);
+    if (savedReaction) {
+      setUserReacted(savedReaction);
+    }
+  }, [postId]);
 
   const reactionTypes = [
     {
@@ -58,6 +82,7 @@ export function BlogReactions({
   ];
 
   async function handleReact(type: "likes" | "love" | "laugh") {
+    if (!userId) return;
     if (userReacted === type) return; // No-op if clicking the same reaction
     
     // Set animation state
@@ -85,6 +110,10 @@ export function BlogReactions({
       
       setReactions(updates);
       setUserReacted(type);
+      
+      // Save user reaction to localStorage
+      const reactionKey = `blog_reaction_${postId}`;
+      localStorage.setItem(reactionKey, type);
       
       // Clear animation after a delay
       setTimeout(() => setIsAnimating(null), 600);
