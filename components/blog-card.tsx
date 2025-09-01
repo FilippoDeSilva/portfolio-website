@@ -114,19 +114,16 @@ export function BlogCard({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 5 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      transition={{ duration: 0.3, ease: "easeOut" }}
-      className="group relative bg-gradient-to-br from-white/80 to-gray-50/80 dark:from-gray-900/80 dark:to-gray-800/80 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-500 overflow-hidden flex flex-col h-full"
+      transition={{ duration: 0.1 }}
+      className="group relative h-full flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm hover:shadow transition-all duration-150"
       style={{ minHeight: previewOnly ? 400 : "auto" }}
     >
       {/* Admin Edit/Delete overlay */}
       {(onEdit || onDelete) && (
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          whileHover={{ opacity: 1, scale: 1 }}
-          className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300"
+        <div 
+          className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
         >
           {onEdit && (
             <button
@@ -156,7 +153,7 @@ export function BlogCard({
               <Trash2 className="w-5 h-5" />
             </button>
           )}
-        </motion.div>
+        </div>
       )}
 
       {/* Media Section */}
@@ -305,7 +302,7 @@ export function BlogCard({
       <div className="p-6 sm:p-8 flex flex-col flex-1 min-h-0 justify-between">
         <div className="space-y-4">
           {/* Title */}
-          <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight group-hover:text-primary transition-colors duration-300">
+          <h3 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
             {post.title}
           </h3>
 
