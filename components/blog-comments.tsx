@@ -54,12 +54,66 @@ interface Comment {
 
 type ReactionKey = "like" | "love" | "fire" | "idea" | "lol";
 
-const REACTIONS: { key: ReactionKey; label: string; Icon: any; color: string }[] = [
-  { key: "like", label: "Like", Icon: ThumbsUp, color: "text-blue-500 hover:text-blue-600" },
-  { key: "love", label: "Love", Icon: Heart, color: "text-pink-500 hover:text-pink-600" },
-  { key: "fire", label: "Fire", Icon: Flame, color: "text-orange-500 hover:text-orange-600" },
-  { key: "idea", label: "Idea", Icon: Lightbulb, color: "text-yellow-500 hover:text-yellow-600" },
-  { key: "lol",  label: "LOL",  Icon: Laugh, color: "text-green-500 hover:text-green-600" },
+const REACTIONS: { 
+  key: ReactionKey; 
+  label: string; 
+  Icon: any; 
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  hoverColor: string;
+  activeColor: string;
+}[] = [
+  { 
+    key: "like", 
+    label: "Like", 
+    Icon: ThumbsUp, 
+    color: "text-blue-500",
+    bgColor: "bg-blue-50 dark:bg-blue-950/30",
+    borderColor: "border-blue-200 dark:border-blue-800",
+    hoverColor: "hover:bg-blue-100 dark:hover:bg-blue-900/50",
+    activeColor: "bg-blue-100 dark:bg-blue-900/50 border-blue-300 dark:border-blue-700"
+  },
+  { 
+    key: "love", 
+    label: "Love", 
+    Icon: Heart, 
+    color: "text-pink-500",
+    bgColor: "bg-pink-50 dark:bg-pink-950/30",
+    borderColor: "border-pink-200 dark:border-pink-800",
+    hoverColor: "hover:bg-pink-100 dark:hover:bg-pink-900/50",
+    activeColor: "bg-pink-100 dark:bg-pink-900/50 border-pink-300 dark:border-pink-700"
+  },
+  { 
+    key: "fire", 
+    label: "Fire", 
+    Icon: Flame, 
+    color: "text-orange-500",
+    bgColor: "bg-orange-50 dark:bg-orange-950/30",
+    borderColor: "border-orange-200 dark:border-orange-800",
+    hoverColor: "hover:bg-orange-100 dark:hover:bg-orange-900/50",
+    activeColor: "bg-orange-100 dark:bg-orange-900/50 border-orange-300 dark:border-orange-700"
+  },
+  { 
+    key: "idea", 
+    label: "Idea", 
+    Icon: Lightbulb, 
+    color: "text-yellow-500",
+    bgColor: "bg-yellow-50 dark:bg-yellow-950/30",
+    borderColor: "border-yellow-200 dark:border-yellow-800",
+    hoverColor: "hover:bg-yellow-100 dark:hover:bg-yellow-900/50",
+    activeColor: "bg-yellow-100 dark:bg-yellow-900/50 border-yellow-300 dark:border-yellow-700"
+  },
+  { 
+    key: "lol", 
+    label: "LOL", 
+    Icon: Laugh, 
+    color: "text-green-500",
+    bgColor: "bg-green-50 dark:bg-green-950/30",
+    borderColor: "border-green-200 dark:border-green-800",
+    hoverColor: "hover:bg-green-100 dark:hover:bg-green-900/50",
+    activeColor: "bg-green-100 dark:bg-green-900/50 border-green-300 dark:border-green-700"
+  },
 ];
 
 /** Stable, random-ish avatar per user using DiceBear "bottts-neutral" */
@@ -343,20 +397,19 @@ export default function BlogComments({ postId }: { postId: string }) {
         (payload) => {
           console.log("Real-time update received:", payload);
           
-          // Add a small delay to ensure database consistency
-          setTimeout(() => {
-            if (payload.eventType === "INSERT") {
-              setComments(prev => {
-                // Avoid duplicates
-                if (prev.some(c => c.id === payload.new.id)) return prev;
-                return [...prev, payload.new as Comment];
-              });
-            } else if (payload.eventType === "UPDATE") {
-              setComments(prev => prev.map(c => c.id === payload.new.id ? payload.new as Comment : c));
-            } else if (payload.eventType === "DELETE") {
-              setComments(prev => prev.filter(c => c.id !== payload.old.id));
-            }
-          }, 100);
+          if (payload.eventType === "INSERT") {
+            setComments(prev => {
+              // Avoid duplicates - check if this is our own optimistic update
+              if (prev.some(c => c.id === payload.new.id)) return prev;
+              return [...prev, payload.new as Comment].sort((a, b) => 
+                new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+              );
+            });
+          } else if (payload.eventType === "UPDATE") {
+            setComments(prev => prev.map(c => c.id === payload.new.id ? payload.new as Comment : c));
+          } else if (payload.eventType === "DELETE") {
+            setComments(prev => prev.filter(c => c.id !== payload.old.id));
+          }
         }
       )
       .subscribe((status, err) => {
@@ -442,6 +495,9 @@ export default function BlogComments({ postId }: { postId: string }) {
         // Replace optimistic comment with real one
         if (data && data[0]) {
           setComments(prev => prev.map(c => c.id === tempId ? data[0] as Comment : c));
+        } else {
+          // If no data returned, refetch to ensure sync
+          setTimeout(fetchComments, 500);
         }
         
         // Auto-show replies for new comments
@@ -504,6 +560,9 @@ export default function BlogComments({ postId }: { postId: string }) {
         // Replace optimistic reply with real one
         if (data && data[0]) {
           setComments(prev => prev.map(c => c.id === tempId ? data[0] as Comment : c));
+        } else {
+          // If no data returned, refetch to ensure sync
+          setTimeout(fetchComments, 500);
         }
         
         // Auto-show replies for new comments
@@ -584,6 +643,10 @@ export default function BlogComments({ postId }: { postId: string }) {
 
   async function handleDeleteComment(id: string) {
     try {
+      // Optimistic update - remove comment immediately
+      const originalComments = comments;
+      setComments(prev => prev.filter(c => c.id !== id));
+
       const { error } = await supabase
         .from("comments")
         .delete()
@@ -593,10 +656,14 @@ export default function BlogComments({ postId }: { postId: string }) {
       if (error) {
         console.error("Error deleting comment:", error);
         setError("Failed to delete comment");
+        // Revert on error
+        setComments(originalComments);
       }
     } catch (err) {
       console.error("Exception deleting comment:", err);
       setError("Failed to delete comment");
+      // Revert on error
+      setComments(comments);
     }
   }
 
@@ -607,7 +674,44 @@ export default function BlogComments({ postId }: { postId: string }) {
     const reactionKey = `comment_reaction_${commentId}_${userId}`;
     const existingReaction = localStorage.getItem(reactionKey);
     
-    if (existingReaction === type) return; // Already reacted with this type
+    // If clicking the same reaction, remove it
+    if (existingReaction === type) {
+      try {
+        const comment = comments.find(c => c.id === commentId);
+        if (!comment) return;
+
+        let newReactions = { ...(comment.reactions || {}) };
+        newReactions[type] = Math.max(0, ((newReactions[type] ?? 0) as number) - 1);
+
+        // Optimistic update
+        setComments(prev => prev.map(c => 
+          c.id === commentId ? { ...c, reactions: newReactions } : c
+        ));
+        localStorage.removeItem(reactionKey);
+
+        const { error } = await supabase
+          .from("comments")
+          .update({ reactions: newReactions })
+          .eq("id", commentId);
+        
+        if (error) {
+          console.error("Error removing reaction:", error);
+          // Revert on error
+          setComments(prev => prev.map(c => 
+            c.id === commentId ? comment : c
+          ));
+          localStorage.setItem(reactionKey, type);
+        } else {
+          // Force a small delay to ensure database consistency for real-time
+          setTimeout(() => {
+            console.log("Reaction removal completed for real-time sync");
+          }, 100);
+        }
+      } catch (err) {
+        console.error("Exception removing reaction:", err);
+      }
+      return;
+    }
 
     try {
       const comment = comments.find(c => c.id === commentId);
@@ -624,6 +728,12 @@ export default function BlogComments({ postId }: { postId: string }) {
       const current = (newReactions[type] ?? 0) as number;
       newReactions[type] = current + 1;
 
+      // Optimistic update
+      setComments(prev => prev.map(c => 
+        c.id === commentId ? { ...c, reactions: newReactions } : c
+      ));
+      localStorage.setItem(reactionKey, type);
+
       const { error } = await supabase
         .from("comments")
         .update({ reactions: newReactions })
@@ -631,11 +741,21 @@ export default function BlogComments({ postId }: { postId: string }) {
       
       if (error) {
         console.error("Error updating reaction:", error);
-        return;
+        // Revert on error
+        setComments(prev => prev.map(c => 
+          c.id === commentId ? comment : c
+        ));
+        if (existingReaction) {
+          localStorage.setItem(reactionKey, existingReaction);
+        } else {
+          localStorage.removeItem(reactionKey);
+        }
+      } else {
+        // Force a small delay to ensure database consistency for real-time
+        setTimeout(() => {
+          console.log("Reaction update completed for real-time sync");
+        }, 100);
       }
-      
-      // Save user's reaction
-      localStorage.setItem(reactionKey, type);
     } catch (err) {
       console.error("Exception updating reaction:", err);
     }
@@ -657,18 +777,27 @@ export default function BlogComments({ postId }: { postId: string }) {
     return existingReaction as ReactionKey | null;
   }
 
-  // Separate top-level comments and replies
-  const topLevelComments = comments.filter(c => !c.parent_id);
-  const replies = comments.filter(c => c.parent_id);
+  // Separate top-level comments and replies - memoized to prevent recalculation
+  const topLevelComments = useMemo(() => comments.filter(c => !c.parent_id), [comments]);
+  const replies = useMemo(() => comments.filter(c => c.parent_id), [comments]);
 
-  function CommentItem({ c, isReply = false }: { c: Comment; isReply?: boolean }) {
+  const CommentItem = memo(({ c, isReply = false }: { c: Comment; isReply?: boolean }) => {
     const seedForThisAuthor = useMemo(
       () => (c.user_id ? `${c.user_id}-v1` : `${c.name || "anon"}-v1`),
       [c.user_id, c.name]
     );
     const authorAvatar = useMemo(() => getAvatarUrl(seedForThisAuthor), [seedForThisAuthor]);
-    const hasReplies = replies.some(r => r.parent_id === c.id);
+    const hasReplies = useMemo(() => replies.some(r => r.parent_id === c.id), [replies, c.id]);
     const showRepliesForThis = showReplies.has(c.id);
+    const userReaction = useMemo(() => getUserReaction(c.id), [c.id, userId]);
+    
+    // Memoize reaction counts to prevent recalculation
+    const reactionCounts = useMemo(() => {
+      return REACTIONS.reduce((acc, { key }) => {
+        acc[key] = c.reactions?.[key] || 0;
+        return acc;
+      }, {} as Record<ReactionKey, number>);
+    }, [c.reactions]);
 
     return (
       <motion.li
@@ -797,40 +926,47 @@ export default function BlogComments({ postId }: { postId: string }) {
 
               {/* Reactions */}
               <div className="flex flex-wrap gap-1 mt-3">
-                {REACTIONS.map(({ key, label, Icon, color }) => {
-                  const count = c.reactions?.[key] || 0;
-                  const userReaction = getUserReaction(c.id);
+                {REACTIONS.map(({ key, label, Icon, color, bgColor, borderColor, hoverColor, activeColor }) => {
+                  const count = reactionCounts[key];
                   const isSelected = userReaction === key;
-                  const disabled = hasUserReacted(c.id, key);
                   
                   return (
-                    <Button
+                    <motion.div
                       key={key}
-                      variant={isSelected ? "default" : "ghost"}
-                      size="sm"
-                      className={`${themeClasses.reactionBtn} ${color} ${
-                        isSelected 
-                          ? 'bg-primary/20 border-primary/30 text-primary font-semibold shadow-md' 
-                          : disabled 
-                            ? 'opacity-70 cursor-not-allowed' 
-                            : 'hover:bg-gray-100 dark:hover:bg-gray-800'
-                      }`}
-                      onClick={() => handleReaction(c.id, key)}
-                      disabled={disabled}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="relative"
                     >
-                      <Icon size={16} />
-                      <span className="hidden xs:inline">{label}</span>
-                      {count > 0 && (
-                        <Badge 
-                          variant={isSelected ? "default" : "secondary"} 
-                          className={`ml-1 text-xs px-1.5 py-0.5 ${
-                            isSelected ? 'bg-primary text-primary-foreground' : ''
-                          }`}
-                        >
-                          {count}
-                        </Badge>
-                      )}
-                    </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleReaction(c.id, key)}
+                        className={`
+                          h-8 px-3 rounded-full border-2 transition-all duration-300 font-medium
+                          ${isSelected ? activeColor : `${bgColor} ${borderColor} ${hoverColor}`}
+                          ${isSelected ? 'shadow-lg' : 'shadow-sm hover:shadow-md'}
+                          group
+                        `}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <Icon className={`w-4 h-4 ${color} ${isSelected ? 'animate-pulse' : ''}`} />
+                          <span className={`text-xs font-medium hidden xs:inline ${isSelected ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
+                            {label}
+                          </span>
+                          {count > 0 && (
+                            <Badge 
+                              variant="secondary" 
+                              className={`
+                                ml-0.5 px-1.5 py-0.5 text-xs font-bold
+                                ${isSelected ? 'bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-gray-100' : 'bg-gray-100/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-300'}
+                              `}
+                            >
+                              {count}
+                            </Badge>
+                          )}
+                        </div>
+                      </Button>
+                    </motion.div>
                   );
                 })}
               </div>
@@ -839,7 +975,7 @@ export default function BlogComments({ postId }: { postId: string }) {
         </Card>
       </motion.li>
     );
-  }
+  });
 
   function Composer({ replyingTo }: { replyingTo: string | null }) {
     return (
