@@ -48,6 +48,7 @@ export default function BlogPage() {
       <TitleBar title="Blog"/>
       <section className="py-24 bg-background">
         <div className="container mx-auto px-4">
+          {/* Header Section - Centered on Large Screens */}
           <div className="text-center mb-10">
             <div className="inline-flex items-center rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-sm text-primary mb-6">
               Blog
@@ -56,67 +57,57 @@ export default function BlogPage() {
               Latest Blog Posts
             </h2>
             <p className="max-w-2xl mx-auto text-muted-foreground">
-            Thoughts, stories, and ideas from the things that spark my curiosity.
+              Thoughts, stories, and ideas from the things that spark my curiosity.
             </p>
           </div>
 
-          {/* Search and Filter Controls */}
+          {/* Search and Controls - Centered */}
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8"
+            className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-center mb-8"
           >
-            <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 rounded-2xl shadow-lg p-6">
-              <div className="flex flex-col lg:flex-row gap-6 items-center justify-between">
-                {/* Search Input */}
-                <div className="relative flex-1 max-w-lg">
-                  <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                  <Input
-                    type="text"
-                    placeholder="Search posts by title or content..."
-                    value={searchTerm}
-                    onChange={handleSearchChange}
-                    className="pl-12 pr-4 h-12 rounded-xl border-gray-200 focus:ring-1 focus:ring-blue-600 dark:border-gray-700/60 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm text-base"
-                  />
-                </div>
+            {/* Search Input */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search posts..."
+                value={searchTerm}
+                onChange={handleSearchChange}
+                className="pl-9 h-9 text-sm w-full sm:w-64"
+              />
+            </div>
 
-                {/* Filter Controls */}
-                <div className="flex items-center gap-4">
-                  {/* Sort Dropdown */}
-                  <div className="relative">
-                    <select
-                      value={sortBy}
-                      onChange={(e) => handleSortChange(e.target.value as "newest" | "oldest" | "popular")}
-                      className="appearance-none bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm border border-gray-200/60 dark:border-gray-700/60 rounded-lg px-4 py-2 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all duration-200 font-medium"
-                    >
-                      <option value="newest">✨ Newest First</option>
-                      <option value="oldest">📅 Oldest First</option>
-                      <option value="popular">🔥 Most Popular</option>
-                    </select>
-                    <Filter className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                  </div>
+            {/* Sort Dropdown */}
+            <select
+              value={sortBy}
+              onChange={(e) => handleSortChange(e.target.value as "newest" | "oldest" | "popular")}
+              className="h-9 px-3 text-sm bg-background border rounded-md focus:outline-none focus:ring-2 focus:ring-ring"
+            >
+              <option value="newest">Newest</option>
+              <option value="oldest">Oldest</option>
+              <option value="popular">Popular</option>
+            </select>
 
-                  {/* View Mode Toggle */}
-                  <div className="flex bg-gray-100/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-lg p-1">
-                    <Button
-                      variant={viewMode === "grid" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => handleViewModeChange("grid")}
-                      className="h-8 px-3 rounded-md transition-all duration-200"
-                    >
-                      <Grid3X3 className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      variant={viewMode === "list" ? "default" : "ghost"}
-                      size="sm"
-                      onClick={() => handleViewModeChange("list")}
-                      className="h-8 px-3 rounded-md transition-all duration-200"
-                    >
-                      <List className="w-4 h-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
+            {/* View Mode Toggle */}
+            <div className="flex bg-muted rounded-md p-0.5">
+              <Button
+                variant={viewMode === "grid" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => handleViewModeChange("grid")}
+                className="h-8 w-8 p-0"
+              >
+                <Grid3X3 className="w-3.5 h-3.5" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => handleViewModeChange("list")}
+                className="h-8 w-8 p-0"
+              >
+                <List className="w-3.5 h-3.5" />
+              </Button>
             </div>
           </motion.div>
 

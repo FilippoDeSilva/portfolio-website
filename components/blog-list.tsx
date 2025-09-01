@@ -31,8 +31,8 @@ const MemoizedBlogCard = memo(({ post, viewMode }: { post: BlogPost; viewMode: "
       >
         <div className="bg-white/90 dark:bg-gray-900/90 backdrop-blur-xl border border-gray-200/60 dark:border-gray-700/60 rounded-2xl p-6 hover:shadow-md transition-all duration-300">
           <div className="flex gap-6">
-            {/* Thumbnail */}
-            <div className="w-32 h-24 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex-shrink-0 overflow-hidden">
+            {/* Thumbnail - Hidden on small screens */}
+            <div className="hidden sm:block w-32 h-24 rounded-xl bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex-shrink-0 overflow-hidden">
               {post.cover_image ? (
                 <img
                   src={post.cover_image}
