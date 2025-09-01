@@ -1,362 +1,6 @@
-// "use client";
-
-// import { useState, useEffect } from "react";
-// import { supabase } from "@/lib/supabaseClient";
-// import { v4 as uuidv4 } from "uuid";
-// import { Send } from "lucide-react";
-// import { motion, AnimatePresence } from "framer-motion";
-
-// interface Comment {
-//   id: string;
-//   content: string;
-//   created_at: string;
-//   parent_id?: string | null;
-//   replies?: Comment[];
-//   name?: string;
-//   user_id?: string;
-// }
-
-// export function BlogComments({ postId }: { postId: string }) {
-//   const [comments, setComments] = useState<Comment[]>([]);
-//   const [loading, setLoading] = useState(true);
-//   const [comment, setComment] = useState("");
-//   const [replyTo, setReplyTo] = useState<string | null>(null);
-//   const [error, setError] = useState("");
-//   const [userId, setUserId] = useState<string | null>(null);
-//   const [username, setUsername] = useState<string | null>(null);
-//   const [showNamePrompt, setShowNamePrompt] = useState(false);
-//   const [pendingComment, setPendingComment] = useState<{
-//     content: string;
-//     replyTo: string | null;
-//   } | null>(null);
-
-//   // Editing state
-//   const [editingId, setEditingId] = useState<string | null>(null);
-//   const [editContent, setEditContent] = useState("");
-
-//   useEffect(() => {
-//     // Get or generate user ID
-//     supabase.auth.getUser().then(({ data }) => {
-//       if (data?.user?.id) {
-//         setUserId(data.user.id);
-//         localStorage.setItem("blogUserId", data.user.id);
-//       } else {
-//         let localId = localStorage.getItem("blogUserId");
-//         if (!localId) {
-//           localId = uuidv4();
-//           localStorage.setItem("blogUserId", localId);
-//         }
-//         setUserId(localId);
-//       }
-//     });
-
-//     // Get username from localStorage
-//     const storedName = localStorage.getItem("blogUserName");
-//     if (storedName) setUsername(storedName);
-//   }, []);
-
-//   useEffect(() => {
-//     fetchComments();
-//   }, [postId]);
-
-//   async function fetchComments() {
-//     setLoading(true);
-//     const { data, error } = await supabase
-//       .from("comments")
-//       .select("id, content, created_at, parent_id, name, user_id")
-//       .eq("post_id", postId)
-//       .order("created_at", { ascending: true });
-//     if (!error && data) setComments(buildThread(data));
-//     setLoading(false);
-//   }
-
-//   function buildThread(flat: Comment[]): Comment[] {
-//     const map: { [id: string]: Comment & { replies: Comment[] } } = {};
-//     flat.forEach((c) => (map[c.id] = { ...c, replies: [] }));
-//     const roots: Comment[] = [];
-//     flat.forEach((c) => {
-//       if (c.parent_id) {
-//         map[c.parent_id]?.replies.push(map[c.id]);
-//       } else {
-//         roots.push(map[c.id]);
-//       }
-//     });
-//     return roots;
-//   }
-
-//   async function handleSubmit(e: any) {
-//     e.preventDefault();
-//     setError("");
-//     if (!comment.trim()) return;
-//     if (!userId) {
-//       setError("You must be identified to comment.");
-//       return;
-//     }
-//     if (!username) {
-//       setShowNamePrompt(true);
-//       setPendingComment({ content: comment, replyTo });
-//       return;
-//     }
-//     const payload = {
-//       post_id: postId,
-//       content: comment,
-//       parent_id: replyTo,
-//       user_id: userId,
-//       name: username,
-//     };
-//     const { error } = await supabase.from("comments").insert([payload]);
-//     if (error) {
-//       setError("Failed to add comment: " + error.message);
-//     }
-//     setComment("");
-//     setReplyTo(null);
-//     fetchComments();
-//   }
-
-//   function handleNamePromptSubmit(e: any) {
-//     e.preventDefault();
-//     if (!username || !username.trim()) return;
-//     localStorage.setItem("blogUserName", username);
-//     setShowNamePrompt(false);
-//     if (pendingComment) {
-//       setComment(pendingComment.content);
-//       setReplyTo(pendingComment.replyTo);
-//       setTimeout(() => {
-//         handleSubmit({ preventDefault: () => {} });
-//         setPendingComment(null);
-//       }, 0);
-//     }
-//   }
-
-//   async function handleEditComment(id: string, content: string) {
-//     setEditingId(id);
-//     setEditContent(content);
-//   }
-
-//   async function handleUpdateComment(e: any) {
-//     e.preventDefault();
-//     if (!editContent.trim() || !editingId) return;
-//     const { error } = await supabase
-//       .from("comments")
-//       .update({ content: editContent })
-//       .eq("id", editingId)
-//       .eq("user_id", userId);
-//     if (error) setError("Failed to update comment");
-//     setEditingId(null);
-//     setEditContent("");
-//     fetchComments();
-//   }
-
-//   async function handleDeleteComment(id: string) {
-//     const { error } = await supabase
-//       .from("comments")
-//       .delete()
-//       .eq("id", id)
-//       .eq("user_id", userId);
-//     if (error) setError("Failed to delete comment");
-//     fetchComments();
-//   }
-
-//   function renderComments(comments: Comment[], level = 0) {
-//     return (
-//       <ul className={level === 0 ? "space-y-4" : "ml-6 border-l pl-4 space-y-4 border-gray-200 dark:border-zinc-700"}>
-//         <AnimatePresence>
-//           {comments.map((c) => (
-//             <motion.li
-//               key={c.id}
-//               initial={{ opacity: 0, y: 8 }}
-//               animate={{ opacity: 1, y: 0 }}
-//               exit={{ opacity: 0, y: -8 }}
-//               transition={{ duration: 0.2 }}
-//               className="rounded-lg border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-3 shadow-sm hover:shadow-md transition-shadow"
-//             >
-//               <div className="flex items-start gap-3">
-//                 {/* Avatar */}
-//                 <div className="w-8 h-8 rounded-full bg-blue-100 dark:bg-blue-800 flex items-center justify-center text-xs font-bold text-blue-700 dark:text-blue-300">
-//                   {(c.name || "A").charAt(0).toUpperCase()}
-//                 </div>
-
-//                 <div className="flex-1">
-//                   <div className="flex justify-between items-center">
-//                     <span className="font-medium text-sm text-gray-800 dark:text-gray-100">
-//                       {c.name || "Anonymous"}
-//                     </span>
-//                     <span className="text-xs text-gray-500">
-//                       {new Date(c.created_at).toLocaleDateString()} ·{" "}
-//                       {new Date(c.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-//                     </span>
-//                   </div>
-
-//                   {/* Content / Edit */}
-//                   {editingId === c.id ? (
-//                     <form onSubmit={handleUpdateComment} className="flex gap-2 mt-2">
-//                       <input
-//                         value={editContent}
-//                         onChange={(e) => setEditContent(e.target.value)}
-//                         className="flex-1 rounded-lg border px-3 py-2 bg-gray-50 dark:bg-zinc-800 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                         autoFocus
-//                       />
-//                       <button type="submit" className="px-3 py-1 rounded bg-blue-600 text-white hover:bg-blue-700">
-//                         Save
-//                       </button>
-//                       <button
-//                         type="button"
-//                         onClick={() => setEditingId(null)}
-//                         className="px-3 py-1 rounded border text-gray-500 hover:bg-gray-100 dark:hover:bg-zinc-800"
-//                       >
-//                         Cancel
-//                       </button>
-//                     </form>
-//                   ) : (
-//                     <p className="mt-1 text-gray-700 dark:text-gray-200 text-sm leading-relaxed">{c.content}</p>
-//                   )}
-
-//                   {/* Actions */}
-//                   <div className="flex gap-3 mt-2 text-xs">
-//                     <button
-//                       onClick={() => setReplyTo(c.id)}
-//                       className="text-blue-600 hover:underline"
-//                     >
-//                       Reply
-//                     </button>
-//                     {userId && c.user_id === userId && (
-//                       <>
-//                         <button
-//                           onClick={() => handleEditComment(c.id, c.content)}
-//                           className="text-green-600 hover:underline"
-//                         >
-//                           Edit
-//                         </button>
-//                         <button
-//                           onClick={() => handleDeleteComment(c.id)}
-//                           className="text-red-600 hover:underline"
-//                         >
-//                           Delete
-//                         </button>
-//                       </>
-//                     )}
-//                   </div>
-
-//                   {/* Reply input */}
-//                   <AnimatePresence>
-//                     {replyTo === c.id && (
-//                       <motion.form
-//                         onSubmit={handleSubmit}
-//                         initial={{ opacity: 0, height: 0 }}
-//                         animate={{ opacity: 1, height: "auto" }}
-//                         exit={{ opacity: 0, height: 0 }}
-//                         transition={{ duration: 0.2 }}
-//                         className="flex gap-2 mt-3"
-//                       >
-//                         <input
-//                           value={comment}
-//                           onChange={(e) => setComment(e.target.value)}
-//                           className="flex-1 rounded-lg border px-3 py-2 text-sm bg-white dark:bg-zinc-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-//                           placeholder="Write a reply..."
-//                           autoFocus
-//                         />
-//                         <button
-//                           type="submit"
-//                           className="rounded-lg bg-blue-600 px-3 py-2 text-white hover:bg-blue-700 transition"
-//                         >
-//                           <Send className="w-4 h-4" />
-//                         </button>
-//                         <button
-//                           type="button"
-//                           onClick={() => {
-//                             setReplyTo(null);
-//                             setComment("");
-//                           }}
-//                           className="px-2 text-gray-500 hover:underline"
-//                         >
-//                           Cancel
-//                         </button>
-//                       </motion.form>
-//                     )}
-//                   </AnimatePresence>
-
-//                   {/* Replies */}
-//                   {c.replies && c.replies.length > 0 && (
-//                     <motion.div
-//                       initial={{ opacity: 0, height: 0 }}
-//                       animate={{ opacity: 1, height: "auto" }}
-//                       exit={{ opacity: 0, height: 0 }}
-//                       transition={{ duration: 0.25 }}
-//                       className="mt-3 pl-6 border-l border-gray-200 dark:border-zinc-700"
-//                     >
-//                       {renderComments(c.replies, level + 1)}
-//                     </motion.div>
-//                   )}
-//                 </div>
-//               </div>
-//             </motion.li>
-//           ))}
-//         </AnimatePresence>
-//       </ul>
-//     );
-//   }
-
-//   return (
-//     <div className="mt-6">
-//       <h4 className="font-semibold mb-4">Comments</h4>
-
-//       {/* Name prompt */}
-//       {showNamePrompt && (
-//         <form onSubmit={handleNamePromptSubmit} className="flex gap-2 mb-4">
-//           <input
-//             value={username || ""}
-//             onChange={(e) => setUsername(e.target.value)}
-//             className="flex-1 rounded-lg border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-//             placeholder="Enter your name"
-//             autoFocus
-//           />
-//           <button
-//             type="submit"
-//             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
-//           >
-//             Continue
-//           </button>
-//         </form>
-//       )}
-
-//       {/* Root comment input */}
-//       {!replyTo && !showNamePrompt && (
-//         <form onSubmit={handleSubmit} className="flex gap-2 mb-6">
-//           <input
-//             value={comment}
-//             onChange={(e) => setComment(e.target.value)}
-//             className="flex-1 rounded-lg border px-4 py-2 bg-white dark:bg-zinc-900 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-//             placeholder="Add a comment..."
-//           />
-//           <button
-//             type="submit"
-//             className="flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 transition-colors"
-//             aria-label="Post comment"
-//           >
-//             <Send className="w-5 h-5" />
-//           </button>
-//         </form>
-//       )}
-
-//       {/* Errors */}
-//       {error && <div className="text-red-500 mb-2">{error}</div>}
-
-//       {/* Comment list */}
-//       {loading ? (
-//         <div className="text-gray-500">Loading comments...</div>
-//       ) : comments.length === 0 ? (
-//         <div className="text-gray-500">No comments yet.</div>
-//       ) : (
-//         renderComments(comments)
-//       )}
-//     </div>
-//   );
-// }
-
-
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback, memo } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { v4 as uuidv4 } from "uuid";
 import { motion, AnimatePresence } from "framer-motion";
@@ -368,23 +12,210 @@ import {
   Check,
   X,
   Heart,
+  Flame,
+  Lightbulb,
+  Laugh,
+  MessageCircle,
+  Clock,
+  User,
+  MoreHorizontal,
+  ThumbsUp,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize";
 
 interface Comment {
   id: string;
+  post_id: string;
   content: string;
   created_at: string;
   parent_id?: string | null;
-  replies?: Comment[];
   name?: string;
   user_id?: string;
   reactions?: { [key: string]: number };
 }
+
+type ReactionKey = "like" | "love" | "fire" | "idea" | "lol";
+
+const REACTIONS: { key: ReactionKey; label: string; Icon: any; color: string }[] = [
+  { key: "like", label: "Like", Icon: ThumbsUp, color: "text-blue-500 hover:text-blue-600" },
+  { key: "love", label: "Love", Icon: Heart, color: "text-pink-500 hover:text-pink-600" },
+  { key: "fire", label: "Fire", Icon: Flame, color: "text-orange-500 hover:text-orange-600" },
+  { key: "idea", label: "Idea", Icon: Lightbulb, color: "text-yellow-500 hover:text-yellow-600" },
+  { key: "lol",  label: "LOL",  Icon: Laugh, color: "text-green-500 hover:text-green-600" },
+];
+
+/** Stable, random-ish avatar per user using DiceBear "bottts-neutral" */
+function getAvatarSeed(userId: string | null) {
+  if (typeof window === "undefined") return "guest";
+  let seed = localStorage.getItem("blogAvatarSeed");
+  if (!seed) {
+    seed = (userId || uuidv4()) + "-" + Math.random().toString(36).slice(2);
+    localStorage.setItem("blogAvatarSeed", seed);
+  }
+  return seed;
+}
+
+function getAvatarUrl(seed: string) {
+  return `https://api.dicebear.com/7.x/bottts-neutral/svg?seed=${encodeURIComponent(
+    seed
+  )}&radius=50&mouth=smile,smile02&eyes=frame01,frame02&backgroundType=gradientLinear`;
+}
+
+/** Anti-spam: remember if this user reacted to a comment (client-side) */
+function hasReactedLocally(commentId: string, type: ReactionKey) {
+  if (typeof window === "undefined") return false;
+  const set = JSON.parse(localStorage.getItem("commentReactions") || "{}");
+  return !!set[`${commentId}:${type}`];
+}
+
+function markReactedLocally(commentId: string, type: ReactionKey) {
+  if (typeof window === "undefined") return;
+  const key = `${commentId}:${type}`;
+  const set = JSON.parse(localStorage.getItem("commentReactions") || "{}");
+  set[key] = true;
+  localStorage.setItem("commentReactions", JSON.stringify(set));
+}
+
+// Stable input components that won't re-render
+const StableCommentInput = memo(({ 
+  value, 
+  onChange, 
+  placeholder, 
+  inputRef 
+}: { 
+  value: string; 
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  placeholder: string;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+}) => (
+  <Textarea
+    ref={inputRef}
+    value={value}
+    onChange={onChange}
+    placeholder={placeholder}
+    className="flex-1 min-h-[44px] rounded-xl focus:ring-1 focus:ring-blue-500"
+    rows={3}
+  />
+));
+
+StableCommentInput.displayName = "StableCommentInput";
+
+const StableUsernameInput = memo(({ 
+  value, 
+  onChange, 
+  inputRef 
+}: { 
+  value: string; 
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}) => (
+  <Input
+    ref={inputRef}
+    value={value}
+    onChange={onChange}
+    placeholder="Enter a display name"
+    className="sm:flex-1 rounded-md"
+  />
+));
+
+StableUsernameInput.displayName = "StableUsernameInput";
+
+const StableEditInput = memo(({ 
+  value, 
+  onChange, 
+  inputRef 
+}: { 
+  value: string; 
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}) => (
+  <Input
+    ref={inputRef}
+    value={value}
+    onChange={onChange}
+    className="flex-1 min-h-[44px] rounded-xl"
+    placeholder="Update your comment…"
+  />
+));
+
+StableEditInput.displayName = "StableEditInput";
+
+// Create a completely isolated comment input component
+const IsolatedCommentInput = memo(({ 
+  initialValue = "",
+  onSubmit,
+  placeholder,
+  submitText = "Post"
+}: { 
+  initialValue?: string;
+  onSubmit: (content: string) => void;
+  placeholder: string;
+  submitText?: string;
+}) => {
+  const [value, setValue] = useState(initialValue);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (value.trim()) {
+      onSubmit(value.trim());
+      setValue("");
+      // Focus back to input after submission
+      setTimeout(() => {
+        if (inputRef.current) {
+          inputRef.current.focus();
+        }
+      }, 100);
+    }
+  }, [value, onSubmit]);
+
+  const handleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setValue(e.target.value);
+  }, []);
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mb-6">
+      <div className="flex items-start gap-3 sm:flex-1">
+        <div className="size-10 sm:size-12 shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
+          <span className="text-primary font-semibold text-lg">U</span>
+        </div>
+        <Textarea
+          ref={inputRef}
+          value={value}
+          onChange={handleChange}
+          placeholder={placeholder}
+          className="flex-1 min-h-[44px] rounded-xl"
+          rows={3}
+        />
+      </div>
+      <div className="flex gap-2 self-end sm:self-auto">
+        <Button type="submit" className="px-4 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
+          <Send size={16} /> {submitText}
+        </Button>
+      </div>
+    </form>
+  );
+});
+
+IsolatedCommentInput.displayName = "IsolatedCommentInput";
 
 export default function BlogComments({ postId }: { postId: string }) {
   const [comments, setComments] = useState<Comment[]>([]);
@@ -396,19 +227,79 @@ export default function BlogComments({ postId }: { postId: string }) {
   const [username, setUsername] = useState<string | null>(null);
   const [showNamePrompt, setShowNamePrompt] = useState(false);
   const [pendingComment, setPendingComment] = useState<{ content: string; replyTo: string | null } | null>(null);
-
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState("");
+  const [showReplies, setShowReplies] = useState<Set<string>>(new Set());
 
-  // Align with your website's theme via Tailwind / shadcn
+  const scrollRef = useRef<HTMLUListElement>(null);
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
+  const usernameInputRef = useRef<HTMLInputElement>(null);
+  const editInputRef = useRef<HTMLInputElement>(null);
+
+  const avatarSeed = useMemo(() => getAvatarSeed(userId), [userId]);
+  const avatarUrl = useMemo(() => getAvatarUrl(avatarSeed), [avatarSeed]);
+
+  // Modern responsive theme classes
   const themeClasses = {
-    card: "bg-white dark:bg-gray-800 shadow rounded-lg p-4",
-    username: "font-semibold text-gray-900 dark:text-gray-100",
-    date: "text-xs text-gray-500 dark:text-gray-400",
-    content: "text-sm text-gray-800 dark:text-gray-200",
-    actions: "flex gap-3 mt-2 text-sm text-gray-600 dark:text-gray-300",
-    reactionBtn: "flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300",
+    container: "max-w-4xl mx-auto",
+    card: "bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl shadow-lg hover:shadow-xl rounded-2xl p-4 sm:p-6 border border-gray-200/60 dark:border-gray-800/60 transition-all duration-300",
+    username: "font-semibold text-gray-900 dark:text-gray-100 text-sm sm:text-base",
+    date: "text-xs text-gray-500 dark:text-gray-400 flex items-center gap-1",
+    content: "prose prose-sm dark:prose-invert max-w-none text-gray-800 dark:text-gray-200 leading-relaxed",
+    actions: "flex flex-wrap items-center gap-2 mt-3 text-sm",
+    reactionBtn: "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-200 hover:scale-105",
+    button: "px-4 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95",
   };
+
+  // Stable event handlers that don't cause re-renders
+  const handleCommentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setComment(e.target.value);
+  }, []);
+
+  const handleEditContentChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditContent(e.target.value);
+  }, []);
+
+  const handleUsernameChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setUsername(e.target.value);
+  }, []);
+
+  const handleReplyClick = useCallback((commentId: string) => {
+    setReplyTo(commentId);
+    // Use a longer delay to ensure the input is fully rendered
+    setTimeout(() => {
+      if (commentInputRef.current) {
+        commentInputRef.current.focus();
+      }
+    }, 200);
+  }, []);
+
+  const handleToggleReplies = useCallback((commentId: string) => {
+    setShowReplies(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(commentId)) {
+        newSet.delete(commentId);
+      } else {
+        newSet.add(commentId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleCancelReply = useCallback(() => {
+    setReplyTo(null);
+    setComment("");
+  }, []);
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingId(null);
+    setEditContent("");
+  }, []);
+
+  const handleCancelUsername = useCallback(() => {
+    setShowNamePrompt(false);
+    setPendingComment(null);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -431,57 +322,129 @@ export default function BlogComments({ postId }: { postId: string }) {
 
   useEffect(() => {
     fetchComments();
+
+    // Real-time updates
+    const channel = supabase
+      .channel(`comments-${postId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "comments", filter: `post_id=eq.${postId}` },
+        (payload) => {
+          console.log("Real-time update received:", payload);
+          if (payload.eventType === "INSERT") {
+            setComments(prev => [...prev, payload.new as Comment]);
+          } else if (payload.eventType === "UPDATE") {
+            setComments(prev => prev.map(c => c.id === payload.new.id ? payload.new as Comment : c));
+          } else if (payload.eventType === "DELETE") {
+            setComments(prev => prev.filter(c => c.id !== payload.old.id));
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [postId]);
 
   async function fetchComments() {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("comments")
-      .select("*")
-      .eq("post_id", postId)
-      .order("created_at", { ascending: true });
+    try {
+      const { data, error } = await supabase
+        .from("comments")
+        .select("*")
+        .eq("post_id", postId)
+        .order("created_at", { ascending: true });
 
-    if (!error && data) setComments(buildThread(data));
-    setLoading(false);
+      if (error) {
+        console.error("Error fetching comments:", error);
+        setError(error.message);
+        setComments([]);
+      } else {
+        console.log("Fetched comments:", data);
+        setComments(data || []);
+      }
+    } catch (err) {
+      console.error("Exception fetching comments:", err);
+      setError("Failed to fetch comments");
+      setComments([]);
+    } finally {
+      setLoading(false);
+    }
   }
 
-  function buildThread(flat: Comment[]): Comment[] {
-    const map: { [id: string]: Comment & { replies: Comment[] } } = {};
-    flat.forEach((c) => (map[c.id] = { ...c, replies: [] }));
-    const roots: Comment[] = [];
-    flat.forEach((c) => {
-      if (c.parent_id) map[c.parent_id]?.replies.push(map[c.id]);
-      else roots.push(map[c.id]);
-    });
-    return roots;
-  }
-
-  async function handleSubmit(e: any) {
-    e.preventDefault();
-    if (!comment.trim()) return;
+  // Handle comment submission from isolated input
+  const handleCommentSubmit = useCallback((content: string) => {
     if (!userId) return setError("You must be identified to comment.");
     if (!username) {
       setShowNamePrompt(true);
-      setPendingComment({ content: comment, replyTo });
+      setPendingComment({ content, replyTo });
       return;
     }
 
     const payload = {
       post_id: postId,
-      content: comment,
+      content,
       parent_id: replyTo,
       user_id: userId,
       name: username,
       reactions: {},
     };
 
-    const { error } = await supabase.from("comments").insert([payload]);
-    if (error) return setError("Failed to add comment: " + error.message);
+    // Insert comment
+    supabase.from("comments").insert([payload]).then(({ error }) => {
+      if (error) {
+        console.error("Error inserting comment:", error);
+        setError("Failed to add comment: " + error.message);
+      } else {
+        // Auto-show replies for new comments
+        if (replyTo) {
+          setShowReplies(prev => new Set([...prev, replyTo]));
+        }
+        // Smooth scroll to new comment
+        setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 100);
+      }
+    });
+  }, [userId, username, postId, replyTo]);
 
-    setComment("");
-    setReplyTo(null);
-    fetchComments();
-  }
+  // Handle reply submission from isolated input
+  const handleReplySubmit = useCallback((content: string) => {
+    if (!userId) return setError("You must be identified to comment.");
+    if (!username) return setError("You must set a display name.");
+
+    const payload = {
+      post_id: postId,
+      content,
+      parent_id: replyTo,
+      user_id: userId,
+      name: username,
+      reactions: {},
+    };
+
+    // Insert reply
+    supabase.from("comments").insert([payload]).then(({ error }) => {
+      if (error) {
+        console.error("Error inserting reply:", error);
+        setError("Failed to add reply: " + error.message);
+      } else {
+        // Auto-show replies for new comments
+        setShowReplies(prev => new Set([...prev, replyTo!]));
+        // Clear reply state
+        setReplyTo(null);
+        // Smooth scroll to new comment
+        setTimeout(() => scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "nearest" }), 100);
+      }
+    });
+  }, [userId, username, postId, replyTo]);
+
+  // Legacy form handler for compatibility
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    if (comment.trim()) {
+      handleCommentSubmit(comment);
+      setComment("");
+    }
+  }, [comment, handleCommentSubmit]);
 
   function handleNamePromptSubmit(e: any) {
     e.preventDefault();
@@ -492,7 +455,7 @@ export default function BlogComments({ postId }: { postId: string }) {
       setComment(pendingComment.content);
       setReplyTo(pendingComment.replyTo);
       setTimeout(() => {
-        handleSubmit({ preventDefault: () => {} });
+        handleCommentSubmit(pendingComment.content);
         setPendingComment(null);
       }, 0);
     }
@@ -501,173 +464,430 @@ export default function BlogComments({ postId }: { postId: string }) {
   async function handleEditComment(id: string, content: string) {
     setEditingId(id);
     setEditContent(content);
+    // Focus the edit input after a short delay
+    setTimeout(() => {
+      if (editInputRef.current) {
+        editInputRef.current.focus();
+      }
+    }, 100);
   }
 
   async function handleUpdateComment(e: any) {
     e.preventDefault();
     if (!editContent.trim() || !editingId) return;
-    await supabase
-      .from("comments")
-      .update({ content: editContent })
-      .eq("id", editingId)
-      .eq("user_id", userId);
-    setEditingId(null);
-    setEditContent("");
-    fetchComments();
+    
+    try {
+      const { error } = await supabase
+        .from("comments")
+        .update({ content: editContent })
+        .eq("id", editingId)
+        .eq("user_id", userId);
+      
+      if (error) {
+        console.error("Error updating comment:", error);
+        setError("Failed to update comment");
+        return;
+      }
+      
+      setEditingId(null);
+      setEditContent("");
+    } catch (err) {
+      console.error("Exception updating comment:", err);
+      setError("Failed to update comment");
+    }
   }
 
   async function handleDeleteComment(id: string) {
-    await supabase.from("comments").delete().eq("id", id).eq("user_id", userId);
-    fetchComments();
+    try {
+      const { error } = await supabase
+        .from("comments")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", userId);
+      
+      if (error) {
+        console.error("Error deleting comment:", error);
+        setError("Failed to delete comment");
+      }
+    } catch (err) {
+      console.error("Exception deleting comment:", err);
+      setError("Failed to delete comment");
+    }
   }
 
-  async function handleReaction(commentId: string, type: string) {
-    const comment = comments.find((c) => c.id === commentId);
-    if (!comment) return;
+  async function handleReaction(commentId: string, type: ReactionKey) {
+    if (hasReactedLocally(commentId, type)) return;
 
-    const current = comment.reactions?.[type] || 0;
-    const newReactions = { ...comment.reactions, [type]: current + 1 };
+    try {
+      const comment = comments.find(c => c.id === commentId);
+      if (!comment) return;
 
-    await supabase.from("comments").update({ reactions: newReactions }).eq("id", commentId);
-    fetchComments();
+      const current = (comment.reactions?.[type] ?? 0) as number;
+      const newReactions = { ...(comment.reactions || {}), [type]: current + 1 };
+
+      const { error } = await supabase
+        .from("comments")
+        .update({ reactions: newReactions })
+        .eq("id", commentId);
+      
+      if (error) {
+        console.error("Error updating reaction:", error);
+        return;
+      }
+      
+      markReactedLocally(commentId, type);
+    } catch (err) {
+      console.error("Exception updating reaction:", err);
+    }
   }
 
-  function renderComments(comments: Comment[], level = 0) {
+  // Separate top-level comments and replies
+  const topLevelComments = comments.filter(c => !c.parent_id);
+  const replies = comments.filter(c => c.parent_id);
+
+  function CommentItem({ c, isReply = false }: { c: Comment; isReply?: boolean }) {
+    const seedForThisAuthor = useMemo(
+      () => (c.user_id ? `${c.user_id}-v1` : `${c.name || "anon"}-v1`),
+      [c.user_id, c.name]
+    );
+    const authorAvatar = useMemo(() => getAvatarUrl(seedForThisAuthor), [seedForThisAuthor]);
+    const hasReplies = replies.some(r => r.parent_id === c.id);
+    const showRepliesForThis = showReplies.has(c.id);
+
     return (
-      <ul className={level === 0 ? "space-y-4" : "ml-6 space-y-4"}>
-        <AnimatePresence>
-          {comments.map((c) => (
-            <motion.li
-              key={c.id}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-            >
-              <Card className={themeClasses.card}>
-                <div className="flex gap-3">
-                  <Avatar>
-                    <AvatarFallback>{(c.name || "A").charAt(0)}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className={themeClasses.username}>{c.name || "Anonymous"}</span>
-                      <span className={themeClasses.date}>
-                        {new Date(c.created_at).toLocaleDateString()} ·{" "}
-                        {new Date(c.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-                      </span>
-                    </div>
+      <motion.li
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ duration: 0.3, ease: "easeOut" }}
+        className={isReply ? 'ml-6 sm:ml-8 lg:ml-12' : ''}
+      >
+        <Card className={`${themeClasses.card} ${isReply ? 'border-l-4 border-l-primary/30' : ''}`}>
+          <div className="flex gap-3 sm:gap-4">
+            <Avatar className="size-10 sm:size-12 shrink-0 ring-2 ring-primary/10">
+              <AvatarImage src={authorAvatar} alt={c.name || "Avatar"} />
+              <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+                {(c.name || "A").charAt(0).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
 
-                    {editingId === c.id ? (
-                      <form onSubmit={handleUpdateComment} className="flex gap-2 mt-2">
-                        <Input value={editContent} onChange={(e) => setEditContent(e.target.value)} autoFocus />
-                        <Button type="submit" variant="outline">
-                          <Check size={16} />
-                        </Button>
-                        <Button type="button" variant="outline" onClick={() => setEditingId(null)}>
-                          <X size={16} />
-                        </Button>
-                      </form>
-                    ) : (
-                      <p className={themeClasses.content}>{c.content}</p>
-                    )}
-
-                    {/* Actions */}
-                    <div className={themeClasses.actions}>
-                      <Button variant="ghost" size="sm" onClick={() => setReplyTo(c.id)}>
-                        <CornerUpLeft size={16} /> Reply
-                      </Button>
-                      {userId && c.user_id === userId && (
-                        <>
-                          <Button variant="ghost" size="sm" onClick={() => handleEditComment(c.id, c.content)}>
-                            <Edit2 size={16} /> Edit
-                          </Button>
-                          <Button variant="ghost" size="sm" onClick={() => handleDeleteComment(c.id)}>
-                            <Trash2 size={16} /> Delete
-                          </Button>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Reactions */}
-                    <div className="flex gap-2 mt-2">
-                      {["like", "love"].map((type) => (
-                        <Button
-                          key={type}
-                          variant="ghost"
-                          size="sm"
-                          className={themeClasses.reactionBtn}
-                          onClick={() => handleReaction(c.id, type)}
-                        >
-                          <Heart size={16} /> {type.charAt(0).toUpperCase() + type.slice(1)} ({c.reactions?.[type] || 0})
-                        </Button>
-                      ))}
-                    </div>
-
-                    {/* Reply input */}
-                    <AnimatePresence>
-                      {replyTo === c.id && (
-                        <motion.form
-                          onSubmit={handleSubmit}
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: "auto" }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="flex gap-2 mt-3"
-                        >
-                          <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Write a reply..." autoFocus />
-                          <Button type="submit">
-                            <Send size={16} />
-                          </Button>
-                          <Button variant="outline" onClick={() => { setReplyTo(null); setComment(""); }}>
-                            <X size={16} />
-                          </Button>
-                        </motion.form>
-                      )}
-                    </AnimatePresence>
-
-                    {/* Nested replies */}
-                    {c.replies && c.replies.length > 0 && (
-                      <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: "auto" }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="mt-3"
-                      >
-                        {renderComments(c.replies, level + 1)}
-                      </motion.div>
-                    )}
-                  </div>
+            <div className="flex-1 min-w-0">
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-2 gap-1">
+                <div className="flex items-center gap-2">
+                  <span className={themeClasses.username}>{c.name || "Anonymous"}</span>
+                  {c.user_id === userId && (
+                    <Badge variant="secondary" className="text-xs px-2 py-0.5">
+                      You
+                    </Badge>
+                  )}
+                  {isReply && (
+                    <Badge variant="outline" className="text-xs px-2 py-0.5">
+                      Reply
+                    </Badge>
+                  )}
                 </div>
-              </Card>
-            </motion.li>
-          ))}
-        </AnimatePresence>
-      </ul>
+                <span className={themeClasses.date}>
+                  <Clock className="w-3 h-3" />
+                  {new Date(c.created_at).toLocaleDateString()} ·{" "}
+                  {new Date(c.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </span>
+              </div>
+
+              {/* Content */}
+              {editingId === c.id ? (
+                <form onSubmit={handleUpdateComment} className="space-y-3">
+                  <StableEditInput
+                    value={editContent}
+                    onChange={handleEditContentChange}
+                    inputRef={editInputRef}
+                  />
+                  <div className="flex gap-2">
+                    <Button type="submit" variant="default" size="sm" className="gap-2">
+                      <Check size={16} /> Save
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" onClick={handleCancelEdit} className="gap-2">
+                      <X size={16} /> Cancel
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className={themeClasses.content}>
+                  <ReactMarkdown
+                    remarkPlugins={[remarkGfm]}
+                    rehypePlugins={[rehypeSanitize]}
+                  >
+                    {c.content}
+                  </ReactMarkdown>
+                </div>
+              )}
+
+              {/* Actions Row */}
+              <div className={themeClasses.actions}>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleReplyClick(c.id)}
+                  className="gap-2 text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/10"
+                >
+                  <CornerUpLeft size={16} />
+                  <span className="hidden sm:inline">Reply</span>
+                </Button>
+
+                {/* Show Replies Button for top-level comments */}
+                {!isReply && hasReplies && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleToggleReplies(c.id)}
+                    className="gap-2 text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/10"
+                  >
+                    {showRepliesForThis ? (
+                      <>
+                        <ChevronUp size={16} />
+                        <span className="hidden sm:inline">Hide Replies</span>
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown size={16} />
+                        <span className="hidden sm:inline">Show Replies</span>
+                      </>
+                    )}
+                    <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0.5">
+                      {replies.filter(r => r.parent_id === c.id).length}
+                    </Badge>
+                  </Button>
+                )}
+
+                {userId && c.user_id === userId && (
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="sm" className="gap-2 text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/10">
+                        <MoreHorizontal size={16} />
+                        <span className="hidden sm:inline">More</span>
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem onClick={() => handleEditComment(c.id, c.content)} className="gap-2">
+                        <Edit2 size={16} /> Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleDeleteComment(c.id)} className="gap-2 text-red-600">
+                        <Trash2 size={16} /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
+              </div>
+
+              {/* Reactions */}
+              <div className="flex flex-wrap gap-1 mt-3">
+                {REACTIONS.map(({ key, label, Icon, color }) => {
+                  const count = c.reactions?.[key] || 0;
+                  const disabled = hasReactedLocally(c.id, key);
+                  return (
+                    <Button
+                      key={key}
+                      variant="ghost"
+                      size="sm"
+                      className={`${themeClasses.reactionBtn} ${color} ${disabled ? 'opacity-70 cursor-not-allowed' : 'hover:bg-gray-100 dark:hover:bg-gray-800'}`}
+                      onClick={() => handleReaction(c.id, key)}
+                      disabled={disabled}
+                    >
+                      <Icon size={16} />
+                      <span className="hidden xs:inline">{label}</span>
+                      {count > 0 && (
+                        <Badge variant="secondary" className="ml-1 text-xs px-1.5 py-0.5">
+                          {count}
+                        </Badge>
+                      )}
+                    </Button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        </Card>
+      </motion.li>
+    );
+  }
+
+  function Composer({ replyingTo }: { replyingTo: string | null }) {
+    return (
+      <motion.form
+        onSubmit={handleSubmit}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-col sm:flex-row gap-3 mb-6"
+      >
+        <div className="flex items-start gap-3 sm:flex-1">
+          <Avatar className="size-10 sm:size-12 shrink-0 ring-2 ring-primary/10">
+            <AvatarImage src={avatarUrl} alt="Your avatar" />
+            <AvatarFallback className="bg-gradient-to-br from-primary/20 to-primary/10 text-primary font-semibold">
+              U
+            </AvatarFallback>
+          </Avatar>
+
+          <StableCommentInput
+            value={comment}
+            onChange={handleCommentChange}
+            placeholder={replyingTo ? "Write a reply (Markdown supported)..." : "Add a comment (Markdown supported)..."}
+            inputRef={commentInputRef}
+          />
+        </div>
+
+        <div className="flex gap-2 self-end sm:self-auto">
+          {replyingTo && (
+            <Button
+              type="button"
+              variant="outline"
+              onClick={handleCancelReply}
+              className={`${themeClasses.button} gap-2`}
+            >
+              <X size={16} /> Cancel
+            </Button>
+          )}
+          <Button type="submit" className={`${themeClasses.button} gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70`}>
+            <Send size={16} /> {replyingTo ? "Reply" : "Post"}
+          </Button>
+        </div>
+      </motion.form>
     );
   }
 
   return (
-    <div className="mt-6">
-      <h4 className="font-semibold mb-4 text-gray-900 dark:text-gray-100">Comments</h4>
+    <div className={`${themeClasses.container} mt-8`}>
+      {/* Header */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 rounded-full bg-primary/10">
+          <MessageCircle className="w-6 h-6 text-primary" />
+        </div>
+        <div>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-gray-100">Comments</h3>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Join the conversation</p>
+        </div>
+      </div>
 
+      {/* Username prompt */}
       {showNamePrompt && (
-        <form onSubmit={handleNamePromptSubmit} className="flex gap-2 mb-4">
-          <Input value={username || ""} onChange={(e) => setUsername(e.target.value)} placeholder="Enter your name" autoFocus />
-          <Button type="submit">Continue</Button>
-        </form>
+        <motion.form
+          onSubmit={handleNamePromptSubmit}
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="flex flex-col sm:flex-row gap-3 mb-6 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/30 rounded-2xl border border-blue-200/50 dark:border-blue-800/50"
+        >
+          <div className="flex items-center gap-3">
+            <User className="w-5 h-5 text-blue-600" />
+            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">Set your display name</span>
+          </div>
+          <StableUsernameInput
+            value={username || ""}
+            onChange={handleUsernameChange}
+            inputRef={usernameInputRef}
+          />
+          <div className="flex gap-2">
+            <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
+              Continue
+            </Button>
+            <Button type="button" variant="outline" onClick={handleCancelUsername}>
+              Cancel
+            </Button>
+          </div>
+        </motion.form>
       )}
 
-      {!replyTo && !showNamePrompt && (
-        <form onSubmit={handleSubmit} className="flex gap-2 mb-6">
-          <Input value={comment} onChange={(e) => setComment(e.target.value)} placeholder="Add a comment..." />
-          <Button type="submit">
-            <Send size={16} />
-          </Button>
-        </form>
+      {/* Top-level composer - Always visible */}
+      {!showNamePrompt && (
+        <IsolatedCommentInput
+          onSubmit={handleCommentSubmit}
+          placeholder="Add a comment (Markdown supported)..."
+          submitText="Post"
+        />
       )}
 
-      {error && <div className="text-red-500 mb-2">{error}</div>}
+      {/* Error display */}
+      {error && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4 p-3 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl text-red-700 dark:text-red-300 text-sm"
+        >
+          {error}
+        </motion.div>
+      )}
 
-      {loading ? <div className="text-gray-500">Loading comments...</div> : comments.length === 0 ? <div className="text-gray-500">No comments yet.</div> : renderComments(comments)}
+      {/* Comments list */}
+      {loading ? (
+        <div className="space-y-4">
+          {[...Array(3)].map((_, i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-gray-100 dark:bg-gray-800 rounded-2xl p-6">
+                <div className="flex gap-4">
+                  <div className="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full" />
+                  <div className="flex-1 space-y-3">
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/4" />
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                    <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : topLevelComments.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center py-12"
+        >
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
+            <MessageCircle className="w-8 h-8 text-gray-400" />
+          </div>
+          <h4 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">No comments yet</h4>
+          <p className="text-gray-600 dark:text-gray-400">Be the first to share your thoughts!</p>
+        </motion.div>
+      ) : (
+        <ul className="space-y-4" ref={scrollRef}>
+          <AnimatePresence>
+            {topLevelComments.map((c) => (
+              <div key={c.id}>
+                <CommentItem c={c} isReply={false} />
+                
+                {/* Inline reply composer */}
+                {replyTo === c.id && !showNamePrompt && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-3 ml-6 sm:ml-8 lg:ml-12"
+                  >
+                    <IsolatedCommentInput
+                      onSubmit={handleReplySubmit}
+                      placeholder="Write a reply (Markdown supported)..."
+                      submitText="Reply"
+                    />
+                  </motion.div>
+                )}
+
+                {/* Show replies inline */}
+                {showReplies.has(c.id) && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="mt-3 space-y-3"
+                  >
+                    {replies
+                      .filter(r => r.parent_id === c.id)
+                      .map(reply => (
+                        <CommentItem key={reply.id} c={reply} isReply={true} />
+                      ))}
+                  </motion.div>
+                )}
+              </div>
+            ))}
+          </AnimatePresence>
+        </ul>
+      )}
     </div>
   );
 }

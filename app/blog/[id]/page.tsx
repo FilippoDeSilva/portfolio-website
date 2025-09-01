@@ -580,6 +580,7 @@ export default function BlogDetailPage() {
                     })}
                   </div>
                 )}
+               
               {/* Reactions Section */}
               <BlogReactions
                 postId={post.id}
@@ -589,10 +590,7 @@ export default function BlogDetailPage() {
                   laugh: post.laugh || 0,
                 }}
               />
-              {/* Comments Section */}
-              <div className="pt-8">
-                <BlogComments postId={post.id} />
-              </div>
+
               {/* Timestamp and View Count always bottom right */}
               <div className="flex items-end justify-end mt-4 gap-3">
                 <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -624,6 +622,12 @@ export default function BlogDetailPage() {
                     : ""}
                 </span>
               </div>
+
+              {/* Comments Section */}
+              <div className="pt-8">
+                <BlogComments postId={post.id} />
+              </div>
+              
             </div>
           </div>
           {/* Other Posts Section */}
@@ -631,7 +635,16 @@ export default function BlogDetailPage() {
             <h2 className="text-2xl font-bold mb-6 text-gray-700 dark:text-white tracking-tight">
               Other Posts
             </h2>
-            <BlogList key={post.id} excludeId={post.id} columns={2} />
+            <BlogList 
+              excludeId={post.id} 
+              columns={2}
+              currentPage={1}
+              searchTerm=""
+              sortBy="newest"
+              viewMode="grid"
+              showControls={false}
+              onDataLoaded={() => {}}
+            />
           </div>
         </div>
 
