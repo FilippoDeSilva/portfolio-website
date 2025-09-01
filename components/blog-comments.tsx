@@ -943,13 +943,19 @@ export default function BlogComments({ postId }: { postId: string }) {
                         onClick={() => handleReaction(c.id, key)}
                         className={`
                           h-8 px-3 rounded-full border-2 transition-all duration-300 font-medium
-                          ${isSelected ? activeColor : `${bgColor} ${borderColor} ${hoverColor}`}
-                          ${isSelected ? 'shadow-lg' : 'shadow-sm hover:shadow-md'}
+                          ${isSelected ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-lg' : `${bgColor} ${borderColor} ${hoverColor} shadow-sm hover:shadow-md`}
                           group
                         `}
                       >
                         <div className="flex items-center gap-1.5">
-                          <Icon className={`w-4 h-4 ${color} ${isSelected ? 'animate-pulse' : ''}`} />
+                          <Icon 
+                            className={`w-4 h-4 transition-all duration-300 ${
+                              isSelected 
+                                ? `${color.replace('text-', 'fill-')} ${color}` 
+                                : `${color} fill-transparent hover:fill-current hover:opacity-70`
+                            }`} 
+                            fill={isSelected ? "currentColor" : "none"}
+                          />
                           <span className={`text-xs font-medium hidden xs:inline ${isSelected ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
                             {label}
                           </span>
@@ -958,7 +964,7 @@ export default function BlogComments({ postId }: { postId: string }) {
                               variant="secondary" 
                               className={`
                                 ml-0.5 px-1.5 py-0.5 text-xs font-bold
-                                ${isSelected ? 'bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-gray-100' : 'bg-gray-100/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-300'}
+                                ${isSelected ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'bg-gray-100/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-300'}
                               `}
                             >
                               {count}

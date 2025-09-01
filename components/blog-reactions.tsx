@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
-import { Heart, ThumbsUp, Laugh, Zap, Star, MessageCircle } from "lucide-react";
+import { Heart, ThumbsUp, Laugh, Zap, Star, MessageCircle, Flame, Sparkles, Coffee } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -14,6 +14,9 @@ export function BlogReactions({
     likes: number; 
     love: number; 
     laugh: number; 
+    fire: number;
+    wow: number;
+    coffee: number;
   } 
 }) {
   const [reactions, setReactions] = useState(initialReactions);
@@ -78,10 +81,40 @@ export function BlogReactions({
       borderColor: "border-yellow-200 dark:border-yellow-800",
       hoverColor: "hover:bg-yellow-100 dark:hover:bg-yellow-900/50",
       activeColor: "bg-yellow-100 dark:bg-yellow-900/50 border-yellow-300 dark:border-yellow-700"
+    },
+    {
+      key: "fire" as const,
+      label: "Fire",
+      icon: Flame,
+      color: "text-orange-500",
+      bgColor: "bg-orange-50 dark:bg-orange-950/30",
+      borderColor: "border-orange-200 dark:border-orange-800",
+      hoverColor: "hover:bg-orange-100 dark:hover:bg-orange-900/50",
+      activeColor: "bg-orange-100 dark:bg-orange-900/50 border-orange-300 dark:border-orange-700"
+    },
+    {
+      key: "wow" as const,
+      label: "Wow",
+      icon: Sparkles,
+      color: "text-purple-500",
+      bgColor: "bg-purple-50 dark:bg-purple-950/30",
+      borderColor: "border-purple-200 dark:border-purple-800",
+      hoverColor: "hover:bg-purple-100 dark:hover:bg-purple-900/50",
+      activeColor: "bg-purple-100 dark:bg-purple-900/50 border-purple-300 dark:border-purple-700"
+    },
+    {
+      key: "coffee" as const,
+      label: "Coffee",
+      icon: Coffee,
+      color: "text-amber-600",
+      bgColor: "bg-amber-50 dark:bg-amber-950/30",
+      borderColor: "border-amber-200 dark:border-amber-800",
+      hoverColor: "hover:bg-amber-100 dark:hover:bg-amber-900/50",
+      activeColor: "bg-amber-100 dark:bg-amber-900/50 border-amber-300 dark:border-amber-700"
     }
   ];
 
-  async function handleReact(type: "likes" | "love" | "laugh") {
+  async function handleReact(type: "likes" | "love" | "laugh" | "fire" | "wow" | "coffee") {
     if (!userId) return;
     if (userReacted === type) return; // No-op if clicking the same reaction
     
@@ -104,7 +137,10 @@ export function BlogReactions({
         .update({ 
           likes: updates.likes, 
           love: updates.love, 
-          laugh: updates.laugh 
+          laugh: updates.laugh,
+          fire: updates.fire,
+          wow: updates.wow,
+          coffee: updates.coffee
         })
         .eq("id", postId);
       
@@ -124,7 +160,7 @@ export function BlogReactions({
     }
   }
 
-  const totalReactions = reactions.likes + reactions.love + reactions.laugh;
+  const totalReactions = reactions.likes + reactions.love + reactions.laugh + reactions.fire + reactions.wow + reactions.coffee;
 
   return (
     <div className="space-y-4">
@@ -148,8 +184,7 @@ export function BlogReactions({
                 onClick={() => handleReact(key)}
                 className={`
                   h-10 px-4 rounded-full border-2 transition-all duration-300 font-medium
-                  ${isActive ? activeColor : `${bgColor} ${borderColor} ${hoverColor}`}
-                  ${isActive ? 'shadow-lg' : 'shadow-sm hover:shadow-md'}
+                  ${isActive ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-lg' : `${bgColor} ${borderColor} ${hoverColor} shadow-sm hover:shadow-md`}
                   group
                 `}
                 disabled={isAnimatingThis}
@@ -162,7 +197,14 @@ export function BlogReactions({
                     } : {}}
                     transition={{ duration: 0.6, ease: "easeOut" }}
                   >
-                    <Icon className={`w-5 h-5 ${color} ${isActive ? 'animate-pulse' : ''}`} />
+                    <Icon 
+                      className={`w-5 h-5 transition-all duration-300 ${
+                        isActive 
+                          ? `${color.replace('text-', 'fill-')} ${color}` 
+                          : `${color} fill-transparent hover:fill-current hover:opacity-70`
+                      }`} 
+                      fill={isActive ? "currentColor" : "none"}
+                    />
                   </motion.div>
                   <span className={`text-sm font-medium ${isActive ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
                     {label}
@@ -172,7 +214,7 @@ export function BlogReactions({
                       variant="secondary" 
                       className={`
                         ml-1 px-2 py-0.5 text-xs font-bold
-                        ${isActive ? 'bg-white/80 dark:bg-gray-800/80 text-gray-900 dark:text-gray-100' : 'bg-gray-100/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-300'}
+                        ${isActive ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'bg-gray-100/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-300'}
                       `}
                     >
                       {count}
@@ -181,15 +223,6 @@ export function BlogReactions({
                 </div>
               </Button>
               
-              {/* Ripple effect on click */}
-              {isAnimatingThis && (
-                <motion.div
-                  className="absolute inset-0 rounded-full bg-current opacity-20"
-                  initial={{ scale: 0, opacity: 0.5 }}
-                  animate={{ scale: 2, opacity: 0 }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                />
-              )}
             </motion.div>
           );
         })}
