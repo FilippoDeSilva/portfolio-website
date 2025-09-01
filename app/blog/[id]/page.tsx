@@ -588,6 +588,9 @@ export default function BlogDetailPage() {
                   likes: post.likes || 0,
                   love: post.love || 0,
                   laugh: post.laugh || 0,
+                  fire: post.fire || 0,
+                  wow: post.wow || 0,
+                  coffee: post.coffee || 0,
                 }}
               />
 

@@ -7,6 +7,9 @@ import BlogComments from "./blog-comments";
 import MediaModal from "./ui/media-modal";
 
 export type BlogPost = {
+  fire: number;
+  wow: number;
+  coffee: number;
   id: string;
   title: string;
   cover_image?: string;
@@ -390,6 +393,9 @@ export function BlogCard({
                   likes: post.likes || 0,
                   love: post.love || 0,
                   laugh: post.laugh || 0,
+                  fire: post.fire || 0,
+                  wow: post.wow || 0,
+                  coffee: post.coffee || 0,
                 }}
               />
               <BlogComments postId={post.id} />

@@ -28,6 +28,45 @@ export function BlogReactions({
     setReactions(initialReactions);
   }, [initialReactions]);
 
+  // Real-time subscription for blog reactions
+  useEffect(() => {
+    if (!postId) return;
+
+    const subscription = supabase
+      .channel(`blog_reactions_${postId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'blogposts',
+          filter: `id=eq.${postId}`
+        },
+        (payload) => {
+          console.log("Real-time blog reaction update:", payload);
+          if (payload.new) {
+            const newReactions = {
+              likes: payload.new.likes || 0,
+              love: payload.new.love || 0,
+              laugh: payload.new.laugh || 0,
+              fire: payload.new.fire || 0,
+              wow: payload.new.wow || 0,
+              coffee: payload.new.coffee || 0
+            };
+            setReactions(newReactions);
+          }
+        }
+      )
+      .subscribe((status, err) => {
+        console.log("Blog reactions subscription status:", status);
+        if (err) console.error("Blog reactions subscription error:", err);
+      });
+
+    return () => {
+      subscription.unsubscribe();
+    };
+  }, [postId]);
+
   useEffect(() => {
     // Get user ID for tracking reactions
     supabase.auth.getUser().then(({ data }) => {
@@ -54,7 +93,7 @@ export function BlogReactions({
   const reactionTypes = [
     {
       key: "likes" as const,
-      label: "Like",
+      // label: "Like",
       icon: ThumbsUp,
       color: "text-blue-500",
       bgColor: "bg-blue-50 dark:bg-blue-950/30",
@@ -64,7 +103,7 @@ export function BlogReactions({
     },
     {
       key: "love" as const,
-      label: "Love",
+      // label: "Love",
       icon: Heart,
       color: "text-pink-500",
       bgColor: "bg-pink-50 dark:bg-pink-950/30",
@@ -74,7 +113,7 @@ export function BlogReactions({
     },
     {
       key: "laugh" as const,
-      label: "Laugh",
+      // label: "Laugh",
       icon: Laugh,
       color: "text-yellow-500",
       bgColor: "bg-yellow-50 dark:bg-yellow-950/30",
@@ -84,7 +123,7 @@ export function BlogReactions({
     },
     {
       key: "fire" as const,
-      label: "Fire",
+      // label: "Fire",
       icon: Flame,
       color: "text-orange-500",
       bgColor: "bg-orange-50 dark:bg-orange-950/30",
@@ -94,7 +133,7 @@ export function BlogReactions({
     },
     {
       key: "wow" as const,
-      label: "Wow",
+     // label: "Wow",
       icon: Sparkles,
       color: "text-purple-500",
       bgColor: "bg-purple-50 dark:bg-purple-950/30",
@@ -104,7 +143,7 @@ export function BlogReactions({
     },
     {
       key: "coffee" as const,
-      label: "Coffee",
+      // label: "Coffee",
       icon: Coffee,
       color: "text-amber-600",
       bgColor: "bg-amber-50 dark:bg-amber-950/30",
@@ -166,7 +205,7 @@ export function BlogReactions({
     <div className="space-y-4">
       {/* Reaction Buttons */}
       <div className="flex flex-wrap items-center gap-3">
-        {reactionTypes.map(({ key, label, icon: Icon, color, bgColor, borderColor, hoverColor, activeColor }) => {
+        {reactionTypes.map(({ key, icon: Icon, color, bgColor, borderColor, hoverColor, activeColor }) => {
           const isActive = userReacted === key;
           const isAnimatingThis = isAnimating === key;
           const count = reactions[key];
@@ -200,15 +239,16 @@ export function BlogReactions({
                     <Icon 
                       className={`w-5 h-5 transition-all duration-300 ${
                         isActive 
-                          ? `${color.replace('text-', 'fill-')} ${color}` 
+                          ? `${color}` 
                           : `${color} fill-transparent hover:fill-current hover:opacity-70`
                       }`} 
                       fill={isActive ? "currentColor" : "none"}
+                      style={isActive ? { color: color.replace('text-', '').replace('-500', '') === 'yellow' ? '#eab308' : undefined } : undefined}
                     />
                   </motion.div>
-                  <span className={`text-sm font-medium ${isActive ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
+                  {/* <span className={`text-sm font-medium ${isActive ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
                     {label}
-                  </span>
+                  </span> */}
                   {count > 0 && (
                     <Badge 
                       variant="secondary" 
@@ -279,7 +319,7 @@ export function BlogReactions({
             className="flex items-center gap-1 text-primary"
           >
             <Star className="w-3 h-3 fill-current" />
-            You reacted with {reactionTypes.find(r => r.key === userReacted)?.label}
+            You reacted with {reactionTypes.find(r => r.key === userReacted)?.key}
           </motion.div>
         )}
       </div>

@@ -8,6 +8,8 @@ import {
   Send,
   Edit2,
   Trash2,
+  ChevronUp,
+  ChevronDown,
   CornerUpLeft,
   Check,
   X,
@@ -19,9 +21,7 @@ import {
   Clock,
   User,
   MoreHorizontal,
-  ThumbsUp,
-  ChevronDown,
-  ChevronUp
+  ThumbsUp
 } from "lucide-react";
 
 import { Card } from "@/components/ui/card";
@@ -56,7 +56,7 @@ type ReactionKey = "like" | "love" | "fire" | "idea" | "lol";
 
 const REACTIONS: { 
   key: ReactionKey; 
-  label: string; 
+  // label: string; 
   Icon: any; 
   color: string;
   bgColor: string;
@@ -66,7 +66,7 @@ const REACTIONS: {
 }[] = [
   { 
     key: "like", 
-    label: "Like", 
+    // label: "Like", 
     Icon: ThumbsUp, 
     color: "text-blue-500",
     bgColor: "bg-blue-50 dark:bg-blue-950/30",
@@ -76,7 +76,7 @@ const REACTIONS: {
   },
   { 
     key: "love", 
-    label: "Love", 
+    // label: "Love", 
     Icon: Heart, 
     color: "text-pink-500",
     bgColor: "bg-pink-50 dark:bg-pink-950/30",
@@ -86,7 +86,7 @@ const REACTIONS: {
   },
   { 
     key: "fire", 
-    label: "Fire", 
+    // label: "Fire", 
     Icon: Flame, 
     color: "text-orange-500",
     bgColor: "bg-orange-50 dark:bg-orange-950/30",
@@ -96,7 +96,7 @@ const REACTIONS: {
   },
   { 
     key: "idea", 
-    label: "Idea", 
+    // label: "Idea", 
     Icon: Lightbulb, 
     color: "text-yellow-500",
     bgColor: "bg-yellow-50 dark:bg-yellow-950/30",
@@ -106,7 +106,7 @@ const REACTIONS: {
   },
   { 
     key: "lol", 
-    label: "LOL", 
+    // label: "LOL", 
     Icon: Laugh, 
     color: "text-green-500",
     bgColor: "bg-green-50 dark:bg-green-950/30",
@@ -399,14 +399,14 @@ export default function BlogComments({ postId }: { postId: string }) {
           
           if (payload.eventType === "INSERT") {
             setComments(prev => {
-              // Avoid duplicates - check if this is our own optimistic update
-              if (prev.some(c => c.id === payload.new.id)) return prev;
+              // Avoid duplicates - check if this is our own optimistic update or already exists
+              if (prev.some(c => c.id === payload.new.id || c.id.startsWith('temp-'))) return prev;
               return [...prev, payload.new as Comment].sort((a, b) => 
                 new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
               );
             });
           } else if (payload.eventType === "UPDATE") {
-            setComments(prev => prev.map(c => c.id === payload.new.id ? payload.new as Comment : c));
+            setComments(prev => prev.map(c => c.id === payload.new.id ? { ...c, ...payload.new } : c));
           } else if (payload.eventType === "DELETE") {
             setComments(prev => prev.filter(c => c.id !== payload.old.id));
           }
@@ -479,7 +479,11 @@ export default function BlogComments({ postId }: { postId: string }) {
       reactions: {},
     };
 
-    setComments(prev => [...prev, optimisticComment]);
+    setComments(prev => {
+      // Check if comment already exists to prevent duplicates
+      if (prev.some(c => c.id === tempId)) return prev;
+      return [...prev, optimisticComment];
+    });
 
     try {
       // Insert comment
@@ -494,7 +498,18 @@ export default function BlogComments({ postId }: { postId: string }) {
         console.log("Comment inserted successfully:", data);
         // Replace optimistic comment with real one
         if (data && data[0]) {
-          setComments(prev => prev.map(c => c.id === tempId ? data[0] as Comment : c));
+          setComments(prev => {
+            // Remove the optimistic comment and add the real one, avoiding duplicates
+            const filtered = prev.filter(c => c.id !== tempId);
+            const realComment = data[0] as Comment;
+            // Check if real comment already exists from real-time subscription
+            if (filtered.some(c => c.id === realComment.id)) {
+              return filtered;
+            }
+            return [...filtered, realComment].sort((a, b) => 
+              new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            );
+          });
         } else {
           // If no data returned, refetch to ensure sync
           setTimeout(fetchComments, 500);
@@ -781,7 +796,7 @@ export default function BlogComments({ postId }: { postId: string }) {
   const topLevelComments = useMemo(() => comments.filter(c => !c.parent_id), [comments]);
   const replies = useMemo(() => comments.filter(c => c.parent_id), [comments]);
 
-  const CommentItem = memo(({ c, isReply = false }: { c: Comment; isReply?: boolean }) => {
+  const CommentItem = memo(({ c, isReply = false, depth = 0 }: { c: Comment; isReply?: boolean; depth?: number }) => {
     const seedForThisAuthor = useMemo(
       () => (c.user_id ? `${c.user_id}-v1` : `${c.name || "anon"}-v1`),
       [c.user_id, c.name]
@@ -799,13 +814,21 @@ export default function BlogComments({ postId }: { postId: string }) {
       }, {} as Record<ReactionKey, number>);
     }, [c.reactions]);
 
+    // Stable key to prevent re-mounting
+    const stableKey = useMemo(() => `comment-${c.id}`, [c.id]);
+
+    // Calculate indentation based on depth (max 3 levels)
+    const maxDepth = 3;
+    const actualDepth = Math.min(depth, maxDepth);
+    const indentClass = actualDepth > 0 ? `ml-${Math.min(actualDepth * 6, 18)} sm:ml-${Math.min(actualDepth * 8, 24)} lg:ml-${Math.min(actualDepth * 12, 36)}` : '';
+
     return (
       <motion.li
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -20 }}
-        transition={{ duration: 0.3, ease: "easeOut" }}
-        className={isReply ? 'ml-6 sm:ml-8 lg:ml-12' : ''}
+        key={stableKey}
+        layout
+        initial={false}
+        animate={{ opacity: 1 }}
+        className={indentClass}
       >
         <Card className={`${themeClasses.card} ${isReply ? 'border-l-4 border-l-primary/30' : ''}`}>
           <div className="flex gap-3 sm:gap-4">
@@ -872,19 +895,27 @@ export default function BlogComments({ postId }: { postId: string }) {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => handleReplyClick(c.id)}
-                  className="gap-2 text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/10"
+                  onClick={() => setReplyTo(replyTo === c.id ? null : c.id)}
+                  className={`gap-2 text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/10 ${replyTo === c.id ? 'bg-primary/10 text-primary' : ''}`}
                 >
                   <CornerUpLeft size={16} />
-                  <span className="hidden sm:inline">Reply</span>
+                  <span className="hidden sm:inline">{replyTo === c.id ? 'Cancel' : 'Reply'}</span>
                 </Button>
 
-                {/* Show Replies Button for top-level comments */}
-                {!isReply && hasReplies && (
+                {/* Show Replies Button for comments/replies that have replies */}
+                {hasReplies && (
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => handleToggleReplies(c.id)}
+                    onClick={() => setShowReplies(prev => {
+                      const newSet = new Set(prev);
+                      if (newSet.has(c.id)) {
+                        newSet.delete(c.id);
+                      } else {
+                        newSet.add(c.id);
+                      }
+                      return newSet;
+                    })}
                     className="gap-2 text-gray-600 dark:text-gray-300 hover:text-primary hover:bg-primary/10"
                   >
                     {showRepliesForThis ? (
@@ -926,7 +957,7 @@ export default function BlogComments({ postId }: { postId: string }) {
 
               {/* Reactions */}
               <div className="flex flex-wrap gap-1 mt-3">
-                {REACTIONS.map(({ key, label, Icon, color, bgColor, borderColor, hoverColor, activeColor }) => {
+                {REACTIONS.map(({ key, Icon, color, bgColor, borderColor, hoverColor, activeColor }) => {
                   const count = reactionCounts[key];
                   const isSelected = userReaction === key;
                   
@@ -951,14 +982,15 @@ export default function BlogComments({ postId }: { postId: string }) {
                           <Icon 
                             className={`w-4 h-4 transition-all duration-300 ${
                               isSelected 
-                                ? `${color.replace('text-', 'fill-')} ${color}` 
+                                ? `${color}` 
                                 : `${color} fill-transparent hover:fill-current hover:opacity-70`
                             }`} 
                             fill={isSelected ? "currentColor" : "none"}
+                            style={isSelected ? { color: color.replace('text-', '').replace('-500', '') === 'yellow' ? '#eab308' : color.replace('text-', '').replace('-500', '') === 'green' ? '#22c55e' : undefined } : undefined}
                           />
-                          <span className={`text-xs font-medium hidden xs:inline ${isSelected ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
+                          {/* <span className={`text-xs font-medium hidden xs:inline ${isSelected ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
                             {label}
-                          </span>
+                          </span> */}
                           {count > 0 && (
                             <Badge 
                               variant="secondary" 
@@ -982,6 +1014,41 @@ export default function BlogComments({ postId }: { postId: string }) {
       </motion.li>
     );
   });
+
+  // Recursive function to render nested replies
+  function renderReplies(parentId: string, currentDepth: number = 0): JSX.Element[] {
+    const maxDepth = 3; // Limit nesting to prevent UI issues
+    if (currentDepth >= maxDepth) return [];
+    
+    return replies
+      .filter(reply => reply.parent_id === parentId)
+      .map(reply => (
+        <div key={`reply-wrapper-${reply.id}`}>
+          <CommentItem c={reply} isReply={true} depth={currentDepth + 1} />
+          
+          {/* Reply form for this specific reply */}
+          {replyTo === reply.id && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className={`mt-3 ${currentDepth < 2 ? 'ml-6 sm:ml-8 lg:ml-12' : ''}`}
+            >
+              <IsolatedCommentInput
+                onSubmit={handleReplySubmit}
+                onCancel={handleCancelReply}
+                placeholder="Write a reply (Markdown supported)..."
+                submitText="Reply"
+                showCancel={true}
+              />
+            </motion.div>
+          )}
+          
+          {/* Nested replies */}
+          {showReplies.has(reply.id) && renderReplies(reply.id, currentDepth + 1)}
+        </div>
+      ));
+  }
 
   function Composer({ replyingTo }: { replyingTo: string | null }) {
     return (
@@ -1119,13 +1186,13 @@ export default function BlogComments({ postId }: { postId: string }) {
         </motion.div>
       ) : (
         <ul className="space-y-4" ref={scrollRef}>
-          <AnimatePresence>
-            {topLevelComments.map((c) => (
-              <div key={c.id}>
-                <CommentItem c={c} isReply={false} />
+          <AnimatePresence mode="popLayout">
+            {topLevelComments.map(comment => (
+              <div key={`comment-wrapper-${comment.id}`}>
+                <CommentItem key={`comment-${comment.id}`} c={comment} />
                 
-                {/* Inline reply composer */}
-                {replyTo === c.id && !showNamePrompt && (
+                {/* Reply input for top-level comment */}
+                {replyTo === comment.id && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
@@ -1142,19 +1209,15 @@ export default function BlogComments({ postId }: { postId: string }) {
                   </motion.div>
                 )}
 
-                {/* Show replies inline */}
-                {showReplies.has(c.id) && (
+                {/* Show nested replies */}
+                {showReplies.has(comment.id) && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
                     animate={{ opacity: 1, height: "auto" }}
                     exit={{ opacity: 0, height: 0 }}
                     className="mt-3 space-y-3"
                   >
-                    {replies
-                      .filter(r => r.parent_id === c.id)
-                      .map(reply => (
-                        <CommentItem key={reply.id} c={reply} isReply={true} />
-                      ))}
+                    {renderReplies(comment.id, 0)}
                   </motion.div>
                 )}
               </div>
