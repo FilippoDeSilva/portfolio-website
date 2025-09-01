@@ -44,7 +44,7 @@ export function BlogCard({
     try {
       const u = new URL(s, s.startsWith('http') ? undefined : 'http://local');
       s = u.pathname;
-    } catch {}
+    } catch { }
     const last = s.split('/').pop() || s;
     return (last.includes('.') ? last.substring(0, last.lastIndexOf('.')) : last).toLowerCase();
   };
@@ -76,7 +76,7 @@ export function BlogCard({
   // Get media type icon
   const getMediaIcon = () => {
     if (!post.media_type) return null;
-    
+
     if (post.media_type.startsWith("audio")) {
       return <Music className="w-5 h-5 text-blue-500" />;
     } else if (post.media_type.startsWith("video")) {
@@ -94,7 +94,7 @@ export function BlogCard({
     const date = new Date(dateString);
     const now = new Date();
     const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
-    
+
     if (diffInHours < 24) {
       if (diffInHours < 1) {
         const diffInMinutes = Math.floor(diffInHours * 60);
@@ -122,7 +122,7 @@ export function BlogCard({
     >
       {/* Admin Edit/Delete overlay */}
       {(onEdit || onDelete) && (
-        <div 
+        <div
           className="absolute top-4 right-4 z-20 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200"
         >
           {onEdit && (
@@ -164,7 +164,7 @@ export function BlogCard({
             const base = getBase(post.media_url);
             const thumbAtt = (post.attachments || []).find((x: any) => x?.type?.startsWith?.('image') && getBase(x.name || x.url) === base);
             const thumb = thumbAtt?.url as string | undefined;
-            
+
             return (
               <div className="w-full">
                 {thumb ? (
@@ -188,7 +188,7 @@ export function BlogCard({
                       src={post.cover_image}
                       alt={post.title}
                       fill
-                      className="object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                      className="object-contain group-hover:scale-105 transition-transform duration-700 ease-out bg-black"
                       sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
                       priority
                     />
@@ -197,6 +197,7 @@ export function BlogCard({
                       {getMediaIcon()}
                     </div>
                   </div>
+
                 ) : (
                   <div className="relative w-full aspect-[16/9] sm:aspect-[4/3] bg-gradient-to-br from-blue-100/50 to-purple-100/50 dark:from-blue-900/30 dark:to-purple-900/30 flex items-center justify-center">
                     <div className="text-center">
@@ -214,7 +215,7 @@ export function BlogCard({
               </div>
             );
           }
-          
+
           // For other media types, use the standard logic
           if (post.media_url && post.media_type?.startsWith("image")) {
             return (
@@ -234,14 +235,14 @@ export function BlogCard({
               </div>
             );
           }
-          
+
           if (post.media_url && post.media_type?.startsWith("video")) {
             return (
               <div className="relative w-full aspect-[16/9] sm:aspect-[4/3] bg-gray-100 dark:bg-gray-800 overflow-hidden rounded-t-3xl">
-                <video 
-                  controls 
-                  preload="metadata" 
-                  playsInline 
+                <video
+                  controls
+                  preload="metadata"
+                  playsInline
                   className="w-full h-full object-cover themed-video-player"
                 >
                   <source src={post.media_url} type={post.media_type} />
@@ -253,7 +254,7 @@ export function BlogCard({
               </div>
             );
           }
-          
+
           if (post.media_url && post.media_type === "application/pdf") {
             return (
               <a
@@ -269,7 +270,7 @@ export function BlogCard({
               </a>
             );
           }
-          
+
           // Fallback to cover image if no media_url
           if (post.cover_image) {
             return (
@@ -286,7 +287,7 @@ export function BlogCard({
               </div>
             );
           }
-          
+
           return (
             <div className="w-full aspect-[16/9] sm:aspect-[4/3] bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-800 dark:to-gray-700 flex items-center justify-center">
               <div className="text-center">
