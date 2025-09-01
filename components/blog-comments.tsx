@@ -1016,7 +1016,7 @@ export default function BlogComments({ postId }: { postId: string }) {
   });
 
   // Recursive function to render nested replies
-  function renderReplies(parentId: string, currentDepth: number = 0): JSX.Element[] {
+  function renderReplies(parentId: string, currentDepth: number = 0): React.ReactElement[] {
     const maxDepth = 3; // Limit nesting to prevent UI issues
     if (currentDepth >= maxDepth) return [];
     
