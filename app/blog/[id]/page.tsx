@@ -188,28 +188,27 @@ export default function BlogDetailPage() {
       <div className="min-h-screen bg-gradient-to-br from-background to-muted/40 py-16 px-2 md:px-0">
         <div className="max-w-3xl mx-auto">
           <div className="rounded-2xl bg-gradient-to-br from-background/90 to-blue-50/60 dark:to-blue-950/40 shadow-xl border border-border p-0 flex flex-col gap-0 overflow-hidden relative">
-            {/* Back Arrow */}
-            <div className="absolute top-4 left-4 z-10">
-              <Link href="/blog">
+            {/* Back Button */}
+            <div className="absolute top-6 left-6 z-10">
+              <Link href="/blog" className="group">
                 <Button
-                  variant="outline"
+                  variant="ghost"
                   size="icon"
-                  className="bg-white/80 dark:bg-zinc-900/80 shadow border border-border transition-all duration-200 hover:bg-blue-100/80 dark:hover:bg-blue-800/60 hover:scale-105 focus:scale-105 hover:ring-2 hover:ring-blue-300 focus:ring-2 focus:ring-blue-400 hover:shadow-xl focus:shadow-xl"
+                  className="h-10 w-10 rounded-full bg-background/80 backdrop-blur-sm border border-border/50 hover:bg-accent/80 hover:border-border/80"
                   aria-label="Back to blog"
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
+                    width="20"
+                    height="20"
                     viewBox="0 0 24 24"
+                    fill="none"
                     stroke="currentColor"
-                    className="w-6 h-6"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M15 19l-7-7 7-7"
-                    />
+                    <polyline points="15 18 9 12 15 6" />
                   </svg>
                 </Button>
               </Link>
