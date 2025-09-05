@@ -274,7 +274,7 @@ export function BlogReactions({
         </div>
 
         {/* Blog Meta - Aligned to the right */}
-        <div className="mt-1 sm:mt-0">
+        <div className="-mb-3 sm:mt-0">
           <BlogMeta viewCount={viewCount} publishedAt={publishedAt} className="justify-end text-xs" />
         </div>
       </div>
