@@ -179,35 +179,59 @@ const StableUsernameInput = memo(({
 
 StableUsernameInput.displayName = "StableUsernameInput";
 
-const StableEditInput = memo(({ 
-  value, 
-  onChange, 
-  inputRef 
-}: { 
-  value: string; 
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  inputRef: React.RefObject<HTMLInputElement | null>;
-}) => (
-  <Input
-    ref={inputRef}
-    value={value}
-    onChange={onChange}
-    className="flex-1 min-h-[44px] rounded-xl"
-    placeholder="Update your comment…"
-  />
-));
+const StableEditInput = memo(({
+  value,
+  onChange,
+  inputRef
+}: {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
+  inputRef: React.RefObject<HTMLTextAreaElement | null>;
+}) => {
+  // Auto-resize the textarea to fit content
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    if (e.target) {
+      e.target.style.height = 'auto';
+      e.target.style.height = `${e.target.scrollHeight}px`;
+    }
+    onChange(e);
+  };
+
+  // Set initial height on mount
+  const setInitialHeight = (el: HTMLTextAreaElement | null) => {
+    if (el) {
+      el.style.height = 'auto';
+      el.style.height = `${el.scrollHeight}px`;
+      if (inputRef) {
+        // @ts-ignore - We know the types match
+        inputRef.current = el;
+      }
+    }
+  };
+
+  return (
+    <Textarea
+      ref={setInitialHeight}
+      value={value}
+      onChange={handleChange}
+      className="flex-1 min-h-[100px] w-full resize-none overflow-hidden rounded-xl"
+      placeholder="Update your comment…"
+      style={{ minHeight: '100px' }}
+    />
+  );
+});
 
 StableEditInput.displayName = "StableEditInput";
 
 // Create a completely isolated comment input component
-const IsolatedCommentInput = memo(({ 
+const IsolatedCommentInput = memo(({
   initialValue = "",
   onSubmit,
   onCancel,
   placeholder,
   submitText = "Post",
   showCancel = false
-}: { 
+}: {
   initialValue?: string;
   onSubmit: (content: string) => void;
   onCancel?: () => void;
@@ -242,34 +266,36 @@ const IsolatedCommentInput = memo(({
   }, [onCancel]);
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 mb-6">
-      <div className="flex items-start gap-3 sm:flex-1">
-        <div className="size-10 sm:size-12 shrink-0 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center">
-          <span className="text-primary font-semibold text-lg">U</span>
-        </div>
+    <form onSubmit={handleSubmit} className="w-full space-y-3">
+      <div className="relative w-full">
         <Textarea
           ref={inputRef}
           value={value}
           onChange={handleChange}
           placeholder={placeholder}
-          className="flex-1 min-h-[44px] rounded-xl"
+          className="w-full min-h-[100px] rounded-xl pr-24"
           rows={3}
         />
-      </div>
-      <div className="flex gap-2 self-end sm:self-auto">
-        {showCancel && (
+        <div className="absolute bottom-3 right-3 flex gap-2">
           <Button 
-            type="button" 
-            variant="outline" 
-            onClick={handleCancel}
-            className="px-4 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 gap-2"
+            type="submit" 
+            size="sm" 
+            className="h-8 px-3 rounded-lg font-medium bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
           >
-            <X size={16} /> Cancel
+            <Send size={16} className="mr-1" /> {submitText}
           </Button>
-        )}
-        <Button type="submit" className="px-4 py-2.5 rounded-xl font-medium transition-all duration-200 hover:scale-105 active:scale-95 gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
-          <Send size={16} /> {submitText}
-        </Button>
+          {showCancel && (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleCancel}
+              className="h-8 px-3 rounded-lg font-medium"
+            >
+              <X size={16} className="mr-1" /> Cancel
+            </Button>
+          )}
+        </div>
       </div>
     </form>
   );
@@ -294,7 +320,7 @@ export default function BlogComments({ postId }: { postId: string }) {
   const scrollRef = useRef<HTMLUListElement>(null);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
   const usernameInputRef = useRef<HTMLInputElement>(null);
-  const editInputRef = useRef<HTMLInputElement>(null);
+  const editInputRef = useRef<HTMLTextAreaElement>(null);
 
   const avatarSeed = useMemo(() => getAvatarSeed(userId), [userId]);
   const avatarUrl = useMemo(() => getAvatarUrl(avatarSeed), [avatarSeed]);
@@ -316,7 +342,7 @@ export default function BlogComments({ postId }: { postId: string }) {
     setComment(e.target.value);
   }, []);
 
-  const handleEditContentChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleEditContentChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setEditContent(e.target.value);
   }, []);
 
@@ -620,41 +646,48 @@ export default function BlogComments({ postId }: { postId: string }) {
     }
   }
 
-  async function handleEditComment(id: string, content: string) {
+  const handleEditComment = useCallback((id: string, content: string) => {
     setEditingId(id);
     setEditContent(content);
-    // Focus the edit input after a short delay
-    setTimeout(() => {
-      if (editInputRef.current) {
-        editInputRef.current.focus();
-      }
-    }, 100);
-  }
+    // Use requestAnimationFrame and setTimeout to ensure the input is rendered and focused
+    requestAnimationFrame(() => {
+      setTimeout(() => {
+        if (editInputRef.current) {
+          const input = editInputRef.current;
+          input.focus();
+          // Set cursor to end of text
+          const length = content.length;
+          input.setSelectionRange(length, length);
+        }
+      }, 0);
+    });
+  }, []);
 
-  async function handleUpdateComment(e: any) {
+  const handleUpdateComment = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editContent.trim() || !editingId) return;
-    
+
     try {
       const { error } = await supabase
         .from("comments")
         .update({ content: editContent })
         .eq("id", editingId)
         .eq("user_id", userId);
-      
+
       if (error) {
         console.error("Error updating comment:", error);
         setError("Failed to update comment");
         return;
       }
-      
+
+      // Clear editing state
       setEditingId(null);
       setEditContent("");
     } catch (err) {
       console.error("Exception updating comment:", err);
       setError("Failed to update comment");
     }
-  }
+  }, [editContent, editingId, userId]);
 
   async function handleDeleteComment(id: string) {
     try {
@@ -864,21 +897,19 @@ export default function BlogComments({ postId }: { postId: string }) {
 
               {/* Content */}
               {editingId === c.id ? (
-                <form onSubmit={handleUpdateComment} className="space-y-3">
-                  <StableEditInput
-                    value={editContent}
-                    onChange={handleEditContentChange}
-                    inputRef={editInputRef}
+                <div className="mt-3">
+                  <IsolatedCommentInput
+                    initialValue={editContent}
+                    onSubmit={(content) => {
+                      setEditContent(content);
+                      handleUpdateComment({ preventDefault: () => {} } as React.FormEvent);
+                    }}
+                    onCancel={handleCancelEdit}
+                    placeholder="Edit your comment..."
+                    submitText="Save"
+                    showCancel={true}
                   />
-                  <div className="flex gap-2">
-                    <Button type="submit" variant="default" size="sm" className="gap-2">
-                      <Check size={16} /> Save
-                    </Button>
-                    <Button type="button" variant="outline" size="sm" onClick={handleCancelEdit} className="gap-2">
-                      <X size={16} /> Cancel
-                    </Button>
-                  </div>
-                </form>
+                </div>
               ) : (
                 <div className={themeClasses.content}>
                   <ReactMarkdown
@@ -1015,16 +1046,13 @@ export default function BlogComments({ postId }: { postId: string }) {
     );
   });
 
-  // Recursive function to render nested replies
-  function renderReplies(parentId: string, currentDepth: number = 0): React.ReactElement[] {
-    const maxDepth = 3; // Limit nesting to prevent UI issues
-    if (currentDepth >= maxDepth) return [];
-    
+  // Function to render all replies at the same level
+  function renderReplies(parentId: string): React.ReactElement[] {
     return replies
       .filter(reply => reply.parent_id === parentId)
       .map(reply => (
-        <div key={`reply-wrapper-${reply.id}`}>
-          <CommentItem c={reply} isReply={true} depth={currentDepth + 1} />
+        <div key={`reply-wrapper-${reply.id}`} className="mt-4">
+          <CommentItem c={reply} isReply={true} depth={0} />
           
           {/* Reply form for this specific reply */}
           {replyTo === reply.id && (
@@ -1032,7 +1060,7 @@ export default function BlogComments({ postId }: { postId: string }) {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className={`mt-3 ${currentDepth < 2 ? 'ml-6 sm:ml-8 lg:ml-12' : ''}`}
+              className="mt-3"
             >
               <IsolatedCommentInput
                 onSubmit={handleReplySubmit}
@@ -1043,9 +1071,6 @@ export default function BlogComments({ postId }: { postId: string }) {
               />
             </motion.div>
           )}
-          
-          {/* Nested replies */}
-          {showReplies.has(reply.id) && renderReplies(reply.id, currentDepth + 1)}
         </div>
       ));
   }
@@ -1209,7 +1234,7 @@ export default function BlogComments({ postId }: { postId: string }) {
                   </motion.div>
                 )}
 
-                {/* Show nested replies */}
+                {/* Show replies */}
                 {showReplies.has(comment.id) && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }}
@@ -1217,7 +1242,7 @@ export default function BlogComments({ postId }: { postId: string }) {
                     exit={{ opacity: 0, height: 0 }}
                     className="mt-3 space-y-3"
                   >
-                    {renderReplies(comment.id, 0)}
+                    {renderReplies(comment.id)}
                   </motion.div>
                 )}
               </div>
