@@ -1046,7 +1046,7 @@ export default function BlogComments({ postId }: { postId: string }) {
     );
   });
 
-  // Function to render all replies at the same level
+  // Function to render all replies at the same level with unlimited nesting
   function renderReplies(parentId: string): React.ReactElement[] {
     return replies
       .filter(reply => reply.parent_id === parentId)
@@ -1069,6 +1069,18 @@ export default function BlogComments({ postId }: { postId: string }) {
                 submitText="Reply"
                 showCancel={true}
               />
+            </motion.div>
+          )}
+          
+          {/* Show replies to this reply */}
+          {showReplies.has(reply.id) && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mt-3 space-y-3"
+            >
+              {renderReplies(reply.id)}
             </motion.div>
           )}
         </div>
