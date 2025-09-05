@@ -1,24 +1,32 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
-import { Heart, ThumbsUp, Laugh, Zap, Star, MessageCircle, Flame, Sparkles, Coffee } from "lucide-react";
+import { Heart, ThumbsUp, Laugh, Flame, Sparkles, Coffee, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { BlogMeta } from "@/components/blog-meta";
 
-export function BlogReactions({ 
-  postId, 
-  initialReactions 
-}: { 
-  postId: string; 
-  initialReactions: { 
-    likes: number; 
-    love: number; 
-    laugh: number; 
+interface BlogReactionsProps {
+  postId: string;
+  initialReactions: {
+    [key: string]: number;
+    likes: number;
+    love: number;
+    laugh: number;
     fire: number;
     wow: number;
     coffee: number;
-  } 
-}) {
+  };
+  viewCount: number;
+  publishedAt?: string | null;
+}
+
+export function BlogReactions({ 
+  postId, 
+  initialReactions,
+  viewCount,
+  publishedAt
+}: BlogReactionsProps) {
   const [reactions, setReactions] = useState(initialReactions);
   const [userReacted, setUserReacted] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState<string | null>(null);
@@ -202,124 +210,119 @@ export function BlogReactions({
   const totalReactions = reactions.likes + reactions.love + reactions.laugh + reactions.fire + reactions.wow + reactions.coffee;
 
   return (
-    <div className="space-y-4">
-      {/* Reaction Buttons */}
-      <div className="flex flex-wrap items-center gap-3">
-        {reactionTypes.map(({ key, icon: Icon, color, bgColor, borderColor, hoverColor, activeColor }) => {
-          const isActive = userReacted === key;
-          const isAnimatingThis = isAnimating === key;
-          const count = reactions[key];
-          
-          return (
-            <motion.div
-              key={key}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="relative"
-            >
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleReact(key)}
-                className={`
-                  h-10 px-4 rounded-full border-2 transition-all duration-300 font-medium
-                  ${isActive ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-lg' : `${bgColor} ${borderColor} ${hoverColor} shadow-sm hover:shadow-md`}
-                  group
-                `}
-                disabled={isAnimatingThis}
+    <div className="space-y-4 w-full">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Reaction Buttons */}
+        <div className="flex flex-wrap items-center gap-3">
+          {reactionTypes.map(({ key, icon: Icon, color, bgColor, borderColor, hoverColor, activeColor }) => {
+            const isActive = userReacted === key;
+            const isAnimatingThis = isAnimating === key;
+            const count = reactions[key];
+            
+            return (
+              <motion.div
+                key={key}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="relative"
               >
-                <div className="flex items-center gap-2">
-                  <motion.div
-                    animate={isAnimatingThis ? {
-                      scale: [1, 1.3, 1],
-                      rotate: [0, -10, 10, 0]
-                    } : {}}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                  >
-                    <Icon 
-                      className={`w-5 h-5 transition-all duration-300 ${
-                        isActive 
-                          ? `${color}` 
-                          : `${color} fill-transparent hover:fill-current hover:opacity-70`
-                      }`} 
-                      fill={isActive ? "currentColor" : "none"}
-                      style={isActive ? { color: color.replace('text-', '').replace('-500', '') === 'yellow' ? '#eab308' : undefined } : undefined}
-                    />
-                  </motion.div>
-                  {/* <span className={`text-sm font-medium ${isActive ? 'text-gray-900 dark:text-gray-100' : 'text-gray-700 dark:text-gray-300'}`}>
-                    {label}
-                  </span> */}
-                  {count > 0 && (
-                    <Badge 
-                      variant="secondary" 
-                      className={`
-                        ml-1 px-2 py-0.5 text-xs font-bold
-                        ${isActive ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'bg-gray-100/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-300'}
-                      `}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleReact(key)}
+                  className={`
+                    h-10 px-4 rounded-full border-2 transition-all duration-300 font-medium
+                    ${isActive ? 'bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 shadow-lg' : `${bgColor} ${borderColor} ${hoverColor} shadow-sm hover:shadow-md`}
+                    group
+                  `}
+                  disabled={isAnimatingThis}
+                >
+                  <div className="flex items-center gap-2">
+                    <motion.div
+                      animate={isAnimatingThis ? {
+                        scale: [1, 1.3, 1],
+                        rotate: [0, -10, 10, 0]
+                      } : {}}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
                     >
-                      {count}
-                    </Badge>
-                  )}
-                </div>
-              </Button>
-              
-            </motion.div>
-          );
-        })}
+                      <Icon 
+                        className={`w-5 h-5 transition-all duration-300 ${
+                          isActive 
+                            ? `${color}` 
+                            : `${color} fill-transparent hover:fill-current hover:opacity-70`
+                        }`} 
+                        fill={isActive ? "currentColor" : "none"}
+                        style={isActive ? { color: color.replace('text-', '').replace('-500', '') === 'yellow' ? '#eab308' : undefined } : undefined}
+                      />
+                    </motion.div>
+                    {count > 0 && (
+                      <Badge 
+                        variant="secondary" 
+                        className={`
+                          ml-1 px-2 py-0.5 text-xs font-bold
+                          ${isActive ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100' : 'bg-gray-100/80 dark:bg-gray-700/80 text-gray-700 dark:text-gray-300'}
+                        `}
+                      >
+                        {count}
+                      </Badge>
+                    )}
+                  </div>
+                </Button>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Blog Meta - Aligned to the right */}
+        <div className="mt-1 sm:mt-0">
+          <BlogMeta viewCount={viewCount} publishedAt={publishedAt} className="justify-end text-xs" />
+        </div>
       </div>
 
-      {/* Total Reactions Summary */}
-      {totalReactions > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400"
-        >
-          <div className="flex -space-x-1">
-            {reactionTypes.map(({ key, icon: Icon, color }) => {
-              const count = reactions[key];
-              if (count === 0) return null;
-              
-              return (
-                <motion.div
-                  key={key}
-                  initial={{ scale: 0, rotate: -180 }}
-                  animate={{ scale: 1, rotate: 0 }}
-                  transition={{ delay: 0.1, duration: 0.3 }}
-                  className="w-6 h-6 rounded-full bg-white dark:bg-gray-800 border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-sm"
-                >
-                  <Icon className={`w-3 h-3 ${color}`} />
-                </motion.div>
-              );
-            })}
-          </div>
-          <span className="font-medium">
-            {totalReactions} reaction{totalReactions !== 1 ? 's' : ''}
-          </span>
-        </motion.div>
-      )}
-
-      {/* Quick Stats */}
-      <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200/60 dark:border-gray-700/60">
-        <div className="flex items-center gap-4">
-          <span className="flex items-center gap-1">
-            <MessageCircle className="w-3 h-3" />
-            Comments
-          </span>
-          <span className="flex items-center gap-1">
-            <Zap className="w-3 h-3" />
-            {totalReactions} reactions
-          </span>
-        </div>
-        
+      {/* Reactions Summary */}
+      <div className="pt-2 border-t border-gray-200/60 dark:border-gray-700/60">
+        {/* User Reaction Notice - Positioned absolutely on larger screens */}
         {userReacted && (
+          <div className="relative">
+            <motion.div
+              key="reaction-notice"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-1 text-primary text-xs sm:text-sm
+                       sm:absolute sm:right-0 sm:-top-8"
+            >
+              <Star className="w-4 h-4"/>
+              You reacted with {reactionTypes.find(r => r.key === userReacted)?.key}
+            </motion.div>
+          </div>
+        )}
+        {totalReactions > 0 && (
           <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className="flex items-center gap-1 text-primary"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center gap-2 mb-2"
           >
-            <Star className="w-3 h-3 fill-current" />
-            You reacted with {reactionTypes.find(r => r.key === userReacted)?.key}
+            <div className="flex -space-x-1">
+              {reactionTypes.map(({ key, icon: Icon, color }) => {
+                const count = reactions[key];
+                if (count === 0) return null;
+                
+                return (
+                  <motion.div
+                    key={key}
+                    initial={{ scale: 0, rotate: -180 }}
+                    animate={{ scale: 1, rotate: 0 }}
+                    transition={{ delay: 0.1, duration: 0.3 }}
+                    className="w-6 h-6 rounded-full bg-white dark:bg-gray-800 border-2 border-white dark:border-gray-800 flex items-center justify-center shadow-sm"
+                  >
+                    <Icon className={`w-3 h-3 ${color}`} />
+                  </motion.div>
+                );
+              })}
+            </div>
+            <span className="font-medium whitespace-nowrap">
+              {totalReactions} reaction{totalReactions !== 1 ? 's' : ''}
+            </span>
           </motion.div>
         )}
       </div>

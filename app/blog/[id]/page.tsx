@@ -166,7 +166,7 @@ export default function BlogDetailPage() {
       </div>
     );
   if (error)
-    return <><TitleBar title="blog" ></TitleBar><div className="py-24 text-center text-red-500">Error: {error}</div> <Footer /></>;
+    return <><TitleBar title="blog" /><div className="py-24 text-center text-red-500">Error: {error}</div> <Footer /></>;
   if (!post)
     return <div className="py-24 text-center">Blog post not found.</div>;
 
@@ -578,52 +578,23 @@ export default function BlogDetailPage() {
                       );
                     })}
                   </div>
-                )}
-               
+                )}               
               {/* Reactions Section */}
-              <BlogReactions
-                postId={post.id}
-                initialReactions={{
-                  likes: post.likes || 0,
-                  love: post.love || 0,
-                  laugh: post.laugh || 0,
-                  fire: post.fire || 0,
-                  wow: post.wow || 0,
-                  coffee: post.coffee || 0,
-                }}
-              />
-
-              {/* Timestamp and View Count always bottom right */}
-              <div className="flex items-end justify-end mt-4 gap-3">
-                <span className="text-xs text-muted-foreground flex items-center gap-1">
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"
-                    />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
-                  {post.view_count ?? 0}
-                </span>
-                <span className="text-xs text-muted-foreground italic">
-                  {post.created_at
-                    ? new Date(post.created_at).toLocaleString(undefined, {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                    : ""}
-                </span>
-              </div>
+              {post && (
+                <BlogReactions 
+                  postId={post.id} 
+                  initialReactions={{
+                    likes: post.likes || 0,
+                    love: post.love || 0,
+                    laugh: post.laugh || 0,
+                    fire: post.fire || 0,
+                    wow: post.wow || 0,
+                    coffee: post.coffee || 0
+                  }}
+                  viewCount={post.view_count || 0}
+                  publishedAt={post.created_at}
+                />
+              )}
 
               {/* Comments Section */}
               <div className="pt-8">

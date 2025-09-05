@@ -266,23 +266,26 @@ const IsolatedCommentInput = memo(({
   }, [onCancel]);
 
   return (
-    <form onSubmit={handleSubmit} className="w-full space-y-3">
-      <div className="relative w-full">
-        <Textarea
-          ref={inputRef}
-          value={value}
-          onChange={handleChange}
-          placeholder={placeholder}
-          className="w-full min-h-[100px] rounded-xl pr-24"
-          rows={3}
-        />
-        <div className="absolute bottom-3 right-3 flex gap-2">
+    <div className="w-full space-y-3">
+      <form onSubmit={handleSubmit} className="w-full">
+        <div className="relative w-full">
+          <Textarea
+            ref={inputRef}
+            value={value}
+            onChange={handleChange}
+            placeholder={placeholder}
+            className="w-full min-h-[100px] rounded-xl pr-4 pb-14 sm:pb-4"
+            rows={3}
+          />
+        </div>
+        
+        <div className="mt-2 flex justify-end items-center gap-2">
           <Button 
             type="submit" 
             size="sm" 
-            className="h-8 px-3 rounded-lg font-medium bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
+            className="h-8 px-4 rounded-lg font-medium transition-all bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70"
           >
-            <Send size={16} className="mr-1" /> {submitText}
+            <Send size={16} className="mr-1.5" /> {submitText}
           </Button>
           {showCancel && (
             <Button
@@ -290,14 +293,14 @@ const IsolatedCommentInput = memo(({
               variant="outline"
               size="sm"
               onClick={handleCancel}
-              className="h-8 px-3 rounded-lg font-medium"
+              className="h-8 px-4 rounded-lg font-medium transition-colors"
             >
-              <X size={16} className="mr-1" /> Cancel
+              Cancel
             </Button>
           )}
         </div>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 });
 
