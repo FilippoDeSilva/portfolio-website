@@ -281,21 +281,6 @@ export function BlogReactions({
 
       {/* Reactions Summary */}
       <div className="pt-2 border-t border-gray-200/60 dark:border-gray-700/60">
-        {/* User Reaction Notice - Positioned absolutely on larger screens */}
-        {userReacted && (
-          <div className="relative">
-            <motion.div
-              key="reaction-notice"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="flex items-center gap-1 text-primary text-xs sm:text-sm
-                       sm:absolute sm:right-0 sm:-top-8"
-            >
-              <Star className="w-4 h-4"/>
-              You reacted with {reactionTypes.find(r => r.key === userReacted)?.key}
-            </motion.div>
-          </div>
-        )}
         {totalReactions > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
@@ -323,7 +308,22 @@ export function BlogReactions({
             <span className="font-medium whitespace-nowrap">
               {totalReactions} reaction{totalReactions !== 1 ? 's' : ''}
             </span>
-          </motion.div>
+          </motion.div> 
+        )}
+        {/* User Reaction Notice - Positioned absolutely on larger screens */}
+        {userReacted && (
+          <div className="relative">
+            <motion.div
+              key="reaction-notice"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              className="flex items-center gap-1 text-primary text-xs sm:text-sm
+                       sm:absolute sm:right-0 sm:-top-8"
+            >
+              <Star className="w-4 h-4"/>
+              You reacted with {reactionTypes.find(r => r.key === userReacted)?.key}
+            </motion.div>
+          </div>
         )}
       </div>
     </div>

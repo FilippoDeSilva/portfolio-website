@@ -17,7 +17,7 @@ export function BlogMeta({ viewCount, publishedAt, className = '' }: BlogMetaPro
   const fullDateTime = `${formattedDate} at ${timeString} (${timeAgo})`;
 
   return (
-    <div className={`flex items-center gap-3 text-xs text-muted-foreground ${className}`}>
+    <div className={`flex items-center gap-3 text-xs sm:text-base text-muted-foreground ${className}`}>
       {/* View Count */}
       <div className="flex items-center gap-1">
         <svg 
