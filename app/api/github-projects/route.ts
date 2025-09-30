@@ -17,7 +17,8 @@ export async function GET(req: NextRequest) {
     "FilippoDeSilva",
     "wlext",
     "portfolio-website",
-    "dotfiles"
+    "dotfiles",
+    "Next.js-Docs"
   ];
   const filtered = data.filter((repo: any) => !repo.fork && !excludedNames.includes(repo.name));
   // Map to include only relevant fields, including stars, forks, etc.
